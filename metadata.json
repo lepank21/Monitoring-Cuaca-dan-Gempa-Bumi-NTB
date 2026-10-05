@@ -1,0 +1,6 @@
+{
+  "name": "SIAGA BENCANA NTB - Pemantauan Gempa & Cuaca BMKG",
+  "description": "Sistem Informasi Pemantauan Potensi Bencana Provinsi Nusa Tenggara Barat dengan Peta OpenStreetMap, integrasi API BMKG Gempa Terkini, Peringatan Dini Cuaca Nowcasting, Prakiraan Cuaca 10 Kab/Kota, dan Notifikasi Real-Time.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
