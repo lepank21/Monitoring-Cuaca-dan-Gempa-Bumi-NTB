@@ -47,7 +47,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={() => setActiveView("map")}
             className="text-base sm:text-lg font-bold tracking-tight text-white hover:text-sky-400 transition-colors whitespace-nowrap"
           >
-            Pusdalops BPBD NTB
+            PUSDALOPS BPBD NTB
           </button>
         </div>
 

@@ -1,7 +1,20 @@
-import React, { useEffect, useRef, useState } from 'react';
-import L from 'leaflet';
-import { EarthquakeItem, WeatherRegency, VolcanoInfo, DistrictInfo } from '../types/bmkg';
-import { Layers, MapPin, Eye, Compass, ShieldAlert, Mountain, CloudLightning } from 'lucide-react';
+import React, { useEffect, useRef, useState } from "react";
+import L from "leaflet";
+import {
+  EarthquakeItem,
+  WeatherRegency,
+  VolcanoInfo,
+  DistrictInfo,
+} from "../types/bmkg";
+import {
+  Layers,
+  MapPin,
+  Eye,
+  Compass,
+  ShieldAlert,
+  Mountain,
+  CloudLightning,
+} from "lucide-react";
 
 interface DisasterMapProps {
   autoGempa: EarthquakeItem | null;
@@ -18,37 +31,43 @@ interface DisasterMapProps {
 // Leaflet default icon bug fix
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-  iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-  shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+  iconRetinaUrl:
+    "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
 });
 
 // Tile Providers (OpenStreetMap based)
 const TILE_LAYERS = {
   osm: {
-    name: 'OpenStreetMap Standar',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> kontributor',
+    name: "OpenStreetMap Standar",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> kontributor',
   },
   osmHot: {
-    name: 'OpenStreetMap Humanitarian (HOT)',
-    url: 'https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> kontributor, Style by Humanitarian OpenStreetMap Team',
+    name: "OpenStreetMap Humanitarian (HOT)",
+    url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> kontributor, Style by Humanitarian OpenStreetMap Team',
   },
   topo: {
-    name: 'OpenTopoMap (Kontur & Topografi)',
-    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> &copy; OpenTopoMap',
+    name: "OpenTopoMap (Kontur & Topografi)",
+    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> &copy; OpenTopoMap',
   },
   cartoVoyager: {
-    name: 'OSM Voyager (Terang & Bersih)',
-    url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> &copy; CARTO',
+    name: "OSM Voyager (Terang & Bersih)",
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> &copy; CARTO',
   },
   cartoDark: {
-    name: 'OSM Dark Matter (Mode Malam)',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> &copy; CARTO',
+    name: "OSM Dark Matter (Mode Malam)",
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    attribution:
+      '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> &copy; CARTO',
   },
 };
 
@@ -73,15 +92,40 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
   const volcanoLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const geologyLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const districtLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const portLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
   // States: OpenStreetMap Standar by default
-  const [activeTile, setActiveTile] = useState<keyof typeof TILE_LAYERS>('osm');
+  const [activeTile, setActiveTile] = useState<keyof typeof TILE_LAYERS>("osm");
   const [showQuakes, setShowQuakes] = useState(true);
   const [showWeather, setShowWeather] = useState(true);
   const [showVolcanoes, setShowVolcanoes] = useState(true);
   const [showGeology, setShowGeology] = useState(true);
   const [showDistricts, setShowDistricts] = useState(false);
+  const [showPorts, setShowPorts] = useState(true);
   const [showLayersDropdown, setShowLayersDropdown] = useState(false);
+  const [showLegend, setShowLegend] = useState(false);
+  const [ntbPorts, setNtbPorts] = useState<any[]>([]);
+
+  // Fetch NTB Ports
+  useEffect(() => {
+    const fetchPorts = async () => {
+      try {
+        const res = await fetch(
+          "https://maritim.bmkg.go.id/marine2026-data/meta/port_province.json",
+        );
+        const data = await res.json();
+        const ntbProvince = data.data.find(
+          (d: any) => d.province === "Nusa Tenggara Barat",
+        );
+        if (ntbProvince && ntbProvince.ports) {
+          setNtbPorts(ntbProvince.ports);
+        }
+      } catch (err) {
+        console.error("Failed to fetch NTB ports:", err);
+      }
+    };
+    fetchPorts();
+  }, []);
 
   // Initialize Map
   useEffect(() => {
@@ -89,14 +133,14 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
     // NTB Center: ~ -8.65, 117.20
     const map = L.map(mapContainerRef.current, {
-      center: [-8.65, 117.20],
+      center: [-8.65, 117.2],
       zoom: 8.5,
       minZoom: 5,
       maxZoom: 17,
       zoomControl: false,
     });
 
-    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    L.control.zoom({ position: "bottomright" }).addTo(map);
 
     // Initial Tile Layer
     const tile = L.tileLayer(TILE_LAYERS[activeTile].url, {
@@ -111,6 +155,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
     volcanoLayerGroupRef.current = L.layerGroup().addTo(map);
     geologyLayerGroupRef.current = L.layerGroup().addTo(map);
     districtLayerGroupRef.current = L.layerGroup().addTo(map);
+    portLayerGroupRef.current = L.layerGroup().addTo(map);
 
     mapInstanceRef.current = map;
 
@@ -142,46 +187,54 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
     // Flores Back-Arc Thrust (North of Bali - Lombok - Sumbawa - Flores)
     const floresBackArcCoords: L.LatLngExpression[] = [
-      [-7.95, 115.30], // North Bali
-      [-8.05, 116.00], // North Lombok Strait
+      [-7.95, 115.3], // North Bali
+      [-8.05, 116.0], // North Lombok Strait
       [-8.12, 116.45], // North Lombok (Sesar Naik Lombok 2018)
       [-8.18, 117.15], // North Sumbawa Barat
-      [-8.15, 117.80], // North Teluk Saleh / Tambora
-      [-8.10, 118.60], // North Bima / Selat Sape
-      [-8.20, 119.50], // Komodo / Flores
+      [-8.15, 117.8], // North Teluk Saleh / Tambora
+      [-8.1, 118.6], // North Bima / Selat Sape
+      [-8.2, 119.5], // Komodo / Flores
     ];
 
     const floresFaultLine = L.polyline(floresBackArcCoords, {
-      color: '#ef4444',
+      color: "#ef4444",
       weight: 3.5,
-      dashArray: '8, 6',
+      dashArray: "8, 6",
       opacity: 0.85,
     });
-    floresFaultLine.bindTooltip('<b>Sesar Naik Busur Belakang Flores (Flores Back-Arc Thrust)</b><br><span class="text-xs text-slate-300">Patahan aktif pemicu Gempa Bumi Lombok M 7.0 (2018) & gempa dangkal utara Sumbawa</span>', {
-      sticky: true,
-      className: 'bg-slate-900 text-slate-100 border border-red-500/40 px-2 py-1 text-xs rounded shadow-lg',
-    });
+    floresFaultLine.bindTooltip(
+      '<b>Sesar Naik Busur Belakang Flores (Flores Back-Arc Thrust)</b><br><span class="text-xs text-slate-300">Patahan aktif pemicu Gempa Bumi Lombok M 7.0 (2018) & gempa dangkal utara Sumbawa</span>',
+      {
+        sticky: true,
+        className:
+          "bg-slate-900 text-slate-100 border border-red-500/40 px-2 py-1 text-xs rounded shadow-lg",
+      },
+    );
     geologyLayerGroupRef.current.addLayer(floresFaultLine);
 
     // Megathrust Zone (South Indian Ocean Trench)
     const megathrustCoords: L.LatLngExpression[] = [
-      [-10.10, 115.50],
-      [-10.25, 116.30],
-      [-10.35, 117.20],
-      [-10.45, 118.20],
-      [-10.55, 119.30],
+      [-10.1, 115.5],
+      [-10.25, 116.3],
+      [-10.35, 117.2],
+      [-10.45, 118.2],
+      [-10.55, 119.3],
     ];
 
     const megathrustLine = L.polyline(megathrustCoords, {
-      color: '#f97316',
+      color: "#f97316",
       weight: 4,
-      dashArray: '4, 8',
+      dashArray: "4, 8",
       opacity: 0.75,
     });
-    megathrustLine.bindTooltip('<b>Zona Megathrust Sumba-Lombok (Subduksi Samudera Hindia)</b><br><span class="text-xs text-slate-300">Zona penunjaman lempeng Indo-Australia terhadap Eurasia</span>', {
-      sticky: true,
-      className: 'bg-slate-900 text-slate-100 border border-amber-500/40 px-2 py-1 text-xs rounded shadow-lg',
-    });
+    megathrustLine.bindTooltip(
+      '<b>Zona Megathrust Sumba-Lombok (Subduksi Samudera Hindia)</b><br><span class="text-xs text-slate-300">Zona penunjaman lempeng Indo-Australia terhadap Eurasia</span>',
+      {
+        sticky: true,
+        className:
+          "bg-slate-900 text-slate-100 border border-amber-500/40 px-2 py-1 text-xs rounded shadow-lg",
+      },
+    );
     geologyLayerGroupRef.current.addLayer(megathrustLine);
   }, [showGeology]);
 
@@ -194,15 +247,15 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
     volcanoes.forEach((volc) => {
       // Custom Volcano Icon
-      const isRinjani = volc.name.includes('Rinjani');
-      const badgeColor = isRinjani ? 'bg-amber-500' : 'bg-emerald-500';
+      const isRinjani = volc.name.includes("Rinjani");
+      const badgeColor = isRinjani ? "bg-amber-500" : "bg-emerald-500";
 
       const customIcon = L.divIcon({
-        className: 'custom-volcano-marker',
+        className: "custom-volcano-marker",
         html: `
           <div class="flex items-center justify-center -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
-            <div class="w-8 h-8 rounded-full bg-slate-900/90 border-2 ${isRinjani ? 'border-amber-400' : 'border-emerald-400'} flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
-              <span class="text-sm font-bold ${isRinjani ? 'text-amber-400' : 'text-emerald-400'}">🌋</span>
+            <div class="w-8 h-8 rounded-full bg-slate-900/90 border-2 ${isRinjani ? "border-amber-400" : "border-emerald-400"} flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
+              <span class="text-sm font-bold ${isRinjani ? "text-amber-400" : "text-emerald-400"}">🌋</span>
             </div>
           </div>
         `,
@@ -214,14 +267,14 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
       const popupContent = `
         <div class="p-3 max-w-xs text-slate-100">
           <div class="flex items-center gap-1.5 mb-1.5">
-            <span class="inline-block w-2.5 h-2.5 rounded-full ${isRinjani ? 'bg-amber-400' : 'bg-emerald-400'}"></span>
+            <span class="inline-block w-2.5 h-2.5 rounded-full ${isRinjani ? "bg-amber-400" : "bg-emerald-400"}"></span>
             <h4 class="font-bold text-sm text-white">${volc.name}</h4>
           </div>
           <p class="text-xs text-slate-300 mb-2">${volc.island}</p>
           <div class="bg-slate-800/80 rounded p-2 text-xs border border-slate-700/60 mb-2">
             <div class="flex justify-between mb-1">
               <span class="text-slate-400">Status PVMBG:</span>
-              <span class="font-semibold ${isRinjani ? 'text-amber-300' : 'text-emerald-300'}">${volc.status}</span>
+              <span class="font-semibold ${isRinjani ? "text-amber-300" : "text-emerald-300"}">${volc.status}</span>
             </div>
             <div class="flex justify-between">
               <span class="text-slate-400">Radius Bahaya:</span>
@@ -238,13 +291,15 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
       // Hazard Buffer Circle
       const hazardCircle = L.circle([volc.lat, volc.lng], {
         radius: volc.hazardRadiusKm * 1000,
-        color: isRinjani ? '#f59e0b' : '#10b981',
-        fillColor: isRinjani ? '#f59e0b' : '#10b981',
+        color: isRinjani ? "#f59e0b" : "#10b981",
+        fillColor: isRinjani ? "#f59e0b" : "#10b981",
         fillOpacity: 0.15,
         weight: 1.5,
-        dashArray: '4, 4',
+        dashArray: "4, 4",
       });
-      hazardCircle.bindTooltip(`Kawasan Rawan Bencana ${volc.name} (${volc.hazardRadiusKm} km)`);
+      hazardCircle.bindTooltip(
+        `Kawasan Rawan Bencana ${volc.name} (${volc.hazardRadiusKm} km)`,
+      );
       volcanoLayerGroupRef.current?.addLayer(hazardCircle);
     });
   }, [showVolcanoes, volcanoes]);
@@ -259,8 +314,8 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
     districts.forEach((d) => {
       const circleMarker = L.circleMarker([d.lat, d.lng], {
         radius: 6,
-        color: '#38bdf8',
-        fillColor: '#0284c7',
+        color: "#38bdf8",
+        fillColor: "#0284c7",
         fillOpacity: 0.8,
         weight: 2,
       });
@@ -291,6 +346,113 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
     });
   }, [showDistricts, districts]);
 
+  // Ports Layer
+  useEffect(() => {
+    if (!portLayerGroupRef.current) return;
+    portLayerGroupRef.current.clearLayers();
+
+    if (!showPorts) return;
+
+    ntbPorts.forEach((port) => {
+      const portDiv = L.divIcon({
+        className: "custom-port-marker",
+        html: `
+          <div class="flex flex-col items-center -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
+            <div class="w-7 h-7 rounded-full bg-indigo-900 border-2 border-indigo-400 shadow-md flex items-center justify-center hover:scale-110 transition-transform">
+              ⚓
+            </div>
+          </div>
+        `,
+        iconSize: [28, 28],
+      });
+
+      const marker = L.marker([port.lat, port.lon], { icon: portDiv });
+
+      const popup = L.popup().setContent(`
+        <div class="p-3 text-slate-100 min-w-[250px]" id="popup-${port.id}">
+           <div class="flex items-center justify-between mb-2 border-b border-slate-700 pb-2">
+             <h4 class="font-bold text-sm text-indigo-400 flex items-center gap-2">⚓ ${port.name}</h4>
+           </div>
+           <div class="text-xs text-slate-400 flex items-center gap-2">
+             <div class="w-3 h-3 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+             Memuat prakiraan maritim...
+           </div>
+        </div>
+      `);
+
+      marker.bindPopup(popup);
+
+      marker.on("popupopen", async () => {
+        try {
+          const res = await fetch(
+            `https://maritim.bmkg.go.id/marine2026-data/pelabuhan/${port.id}.json`,
+          );
+          if (!res.ok) throw new Error("API failed");
+          const data = await res.json();
+
+          let forecastHtml =
+            '<div class="text-xs text-red-400">Data cuaca tidak tersedia</div>';
+
+          // API returns forecast in forecast_day1 array (hourly data)
+          const forecastArr = data.forecast_day1 || data.data || [];
+          if (forecastArr.length > 0) {
+            // Show the next 3 forecast entries
+            const forecasts = forecastArr.slice(0, 3);
+            forecastHtml = '<div class="space-y-2 mt-2">';
+            forecasts.forEach((f: any) => {
+              // API time format: "2026-10-06 00:00 UTC" → convert to ISO
+              const isoTime = f.time.replace(" UTC", "Z").replace(" ", "T");
+              const localTime =
+                new Date(isoTime).toLocaleTimeString("id-ID", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  timeZone: "Asia/Makassar",
+                }) + " WITA";
+              forecastHtml += `
+                <div class="bg-slate-800 p-2 rounded border border-slate-700 text-[11px]">
+                  <div class="text-sky-300 font-bold mb-1 flex justify-between">
+                    <span>🕒 ${localTime}</span>
+                    <span class="text-amber-300">${f.weather}</span>
+                  </div>
+                  <div class="grid grid-cols-2 gap-1 text-[10px]">
+                    <div><span class="text-slate-400">Angin:</span> <span class="text-white">${f.wind_speed} kt (${f.wind_from})</span></div>
+                    <div><span class="text-slate-400">Gelombang:</span> <span class="text-white">${f.wave_height}m</span></div>
+                    <div><span class="text-slate-400">Status:</span> <span class="text-white">${f.wave_cat}</span></div>
+                    <div><span class="text-slate-400">Arus:</span> <span class="text-white">${f.current_speed} m/s</span></div>
+                  </div>
+                </div>
+              `;
+            });
+            forecastHtml += "</div>";
+          }
+
+          const popupEl = document.getElementById(`popup-${port.id}`);
+          if (popupEl) {
+            popupEl.innerHTML = `
+               <div class="flex items-center justify-between mb-2 border-b border-slate-700 pb-2">
+                 <h4 class="font-bold text-sm text-indigo-400 flex items-center gap-2">⚓ ${port.name}</h4>
+                 <span class="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">BMKG Maritim</span>
+               </div>
+               ${forecastHtml}
+             `;
+          }
+        } catch (err) {
+          const popupEl = document.getElementById(`popup-${port.id}`);
+          if (popupEl) {
+            popupEl.innerHTML = `
+               <div class="flex items-center justify-between mb-2 border-b border-slate-700 pb-2">
+                 <h4 class="font-bold text-sm text-red-400 flex items-center gap-2">⚓ ${port.name}</h4>
+               </div>
+               <div class="text-xs text-red-400 mt-2">Gagal memuat data dari server BMKG.</div>
+             `;
+          }
+        }
+      });
+
+      portLayerGroupRef.current?.addLayer(marker);
+    });
+  }, [showPorts, ntbPorts]);
+
   // Weather Regencies Layer
   useEffect(() => {
     if (!weatherLayerGroupRef.current) return;
@@ -300,25 +462,26 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
     weatherRegencies.forEach((reg) => {
       const isSelected = selectedRegency?.id === reg.id;
-      const isCaution = reg.current.weather.severity === 'caution' || reg.current.weather.severity === 'warning';
+      const isCaution =
+        reg.current.weather.severity === "caution" ||
+        reg.current.weather.severity === "warning";
 
       const weatherDiv = L.divIcon({
-        className: 'custom-weather-marker',
+        className: "custom-weather-marker",
         html: `
           <div class="flex flex-col items-center -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
-            <div class="px-2 py-1 rounded-md text-[11px] font-semibold flex items-center gap-1.5 shadow-md border ${
+            <div class="px-2 py-1 rounded-md text-[11px] font-semibold flex items-center justify-center shadow-md border ${
               isSelected
-                ? 'bg-sky-500 text-white border-white scale-110'
+                ? "bg-sky-500 text-white border-white scale-110"
                 : isCaution
-                ? 'bg-slate-900/90 text-amber-300 border-amber-500/50 hover:border-amber-400'
-                : 'bg-slate-900/90 text-slate-200 border-slate-700 hover:border-sky-400'
+                  ? "bg-slate-900/90 text-amber-300 border-amber-500/50 hover:border-amber-400"
+                  : "bg-slate-900/90 text-slate-200 border-slate-700 hover:border-sky-400"
             } transition-all">
               <span class="text-xs font-mono font-bold">${reg.current.temperatureC}°C</span>
-              <span class="text-[10px] text-slate-300 truncate max-w-[70px]">${reg.name.replace('Kab. ', '').replace('Kota ', '')}</span>
             </div>
           </div>
         `,
-        iconSize: [80, 26],
+        iconSize: [45, 26],
       });
 
       const marker = L.marker([reg.lat, reg.lng], { icon: weatherDiv });
@@ -358,22 +521,22 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
                     .map(
                       (f) => `
                     <div class="bg-slate-900 p-1.5 rounded flex-1 text-center border border-slate-800">
-                      <span class="text-[10px] text-slate-400 block">${f.datetime || 'WITA'}</span>
+                      <span class="text-[10px] text-slate-400 block">${f.datetime || "WITA"}</span>
                       <span class="font-medium text-slate-200 block text-[10px] truncate">${f.desc}</span>
                     </div>
-                  `
+                  `,
                     )
-                    .join('')}
+                    .join("")}
                 </div>
               </div>
             `
-              : ''
+              : ""
           }
         </div>
       `;
 
       marker.bindPopup(popupContent);
-      marker.on('click', () => onSelectRegency(reg));
+      marker.on("click", () => onSelectRegency(reg));
       weatherLayerGroupRef.current?.addLayer(marker);
     });
   }, [showWeather, weatherRegencies, selectedRegency, onSelectRegency]);
@@ -392,7 +555,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
       // Pulse Radar Effect for Latest Earthquake
       const pulseDiv = L.divIcon({
-        className: 'custom-autogempa-marker',
+        className: "custom-autogempa-marker",
         html: `
           <div class="relative flex items-center justify-center -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
             <div class="absolute w-14 h-14 rounded-full bg-red-600/30 quake-pulse-ring"></div>
@@ -405,7 +568,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
                 ? `<div class="absolute -top-6 whitespace-nowrap bg-red-950 text-red-200 border border-red-500 text-[10px] px-1.5 py-0.5 rounded font-bold shadow animate-bounce">
                     WILAYAH NTB (${autoGempa.distanceToNTBKm} km)
                   </div>`
-                : ''
+                : ""
             }
           </div>
         `,
@@ -432,7 +595,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
             </div>
             <div class="flex justify-between">
               <span class="text-slate-400">Jarak ke NTB:</span>
-              <span class="font-mono text-amber-300 font-semibold">${autoGempa.distanceToNTBKm ?? '-'} km</span>
+              <span class="font-mono text-amber-300 font-semibold">${autoGempa.distanceToNTBKm ?? "-"} km</span>
             </div>
             <div class="flex justify-between">
               <span class="text-slate-400">Koordinat:</span>
@@ -446,7 +609,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
                 <span class="text-yellow-300 text-[11px]">${autoGempa.Dirasakan}</span>
               </div>
             `
-                : ''
+                : ""
             }
           </div>
           ${
@@ -456,13 +619,13 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
               Lihat Peta Shakemap BMKG Resmi &rarr;
             </a>
           `
-              : ''
+              : ""
           }
         </div>
       `;
 
       autoMarker.bindPopup(autoPopupContent);
-      autoMarker.on('click', () => onSelectQuake(autoGempa));
+      autoMarker.on("click", () => onSelectQuake(autoGempa));
       quakeLayerGroupRef.current.addLayer(autoMarker);
     }
 
@@ -483,22 +646,23 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
       const mag = parseFloat(q.Magnitude) || 4.0;
       const isNTB = q.isNtbArea;
-      const isSelected = selectedQuake && selectedQuake.Coordinates === q.Coordinates;
+      const isSelected =
+        selectedQuake && selectedQuake.Coordinates === q.Coordinates;
 
-      let colorClass = 'bg-yellow-500 border-yellow-300 text-slate-950';
+      let colorClass = "bg-yellow-500 border-yellow-300 text-slate-950";
       if (mag >= 6.0) {
-        colorClass = 'bg-red-600 border-red-300 text-white';
+        colorClass = "bg-red-600 border-red-300 text-white";
       } else if (mag >= 5.0) {
-        colorClass = 'bg-amber-600 border-amber-300 text-white';
+        colorClass = "bg-amber-600 border-amber-300 text-white";
       }
 
       const quakeIcon = L.divIcon({
-        className: 'custom-recent-quake-marker',
+        className: "custom-recent-quake-marker",
         html: `
           <div class="flex items-center justify-center -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
             <div class="px-1.5 py-0.5 rounded-full ${colorClass} border font-mono font-bold text-[10px] shadow-md flex items-center gap-0.5 ${
-              isSelected ? 'scale-125 ring-2 ring-white' : ''
-            } ${isNTB ? 'ring-2 ring-red-500' : ''} transition-transform group-hover:scale-115">
+              isSelected ? "scale-125 ring-2 ring-white" : ""
+            } ${isNTB ? "ring-2 ring-red-500" : ""} transition-transform group-hover:scale-115">
               <span>M${q.Magnitude}</span>
             </div>
           </div>
@@ -511,14 +675,14 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
       const popupContent = `
         <div class="p-3 text-slate-100 min-w-[240px]">
           <div class="flex items-center justify-between mb-1.5">
-            <span class="font-bold text-xs ${mag >= 5.5 ? 'text-red-400' : 'text-amber-400'}">M ${q.Magnitude} · ${q.Kedalaman}</span>
+            <span class="font-bold text-xs ${mag >= 5.5 ? "text-red-400" : "text-amber-400"}">M ${q.Magnitude} · ${q.Kedalaman}</span>
             <span class="text-[11px] font-mono text-slate-400">${q.Tanggal} ${q.Jam}</span>
           </div>
           <p class="text-xs text-slate-200 mb-2">${q.Wilayah}</p>
           <div class="bg-slate-800/80 p-2 rounded text-[11px] space-y-1 border border-slate-700/60">
             <div class="flex justify-between">
               <span class="text-slate-400">Jarak ke NTB:</span>
-              <span class="font-mono ${isNTB ? 'text-red-400 font-bold' : 'text-slate-300'}">${q.distanceToNTBKm ?? '-'} km ${isNTB ? '(Wilayah NTB)' : ''}</span>
+              <span class="font-mono ${isNTB ? "text-red-400 font-bold" : "text-slate-300"}">${q.distanceToNTBKm ?? "-"} km ${isNTB ? "(Wilayah NTB)" : ""}</span>
             </div>
             ${
               q.Dirasakan
@@ -528,14 +692,14 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
                 <span class="text-yellow-300">${q.Dirasakan}</span>
               </div>
             `
-                : ''
+                : ""
             }
           </div>
         </div>
       `;
 
       marker.bindPopup(popupContent);
-      marker.on('click', () => onSelectQuake(q));
+      marker.on("click", () => onSelectQuake(q));
       quakeLayerGroupRef.current?.addLayer(marker);
     });
   }, [showQuakes, autoGempa, recentQuakes, selectedQuake, onSelectQuake]);
@@ -544,38 +708,48 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     if (selectedQuake && selectedQuake.parsedLat && selectedQuake.parsedLng) {
-      mapInstanceRef.current.flyTo([selectedQuake.parsedLat, selectedQuake.parsedLng], 10, {
-        duration: 1.2,
-      });
+      mapInstanceRef.current.flyTo(
+        [selectedQuake.parsedLat, selectedQuake.parsedLng],
+        10,
+        {
+          duration: 1.2,
+        },
+      );
     }
   }, [selectedQuake]);
 
   useEffect(() => {
     if (!mapInstanceRef.current) return;
     if (selectedRegency && selectedRegency.lat && selectedRegency.lng) {
-      mapInstanceRef.current.flyTo([selectedRegency.lat, selectedRegency.lng], 11, {
-        duration: 1.2,
-      });
+      mapInstanceRef.current.flyTo(
+        [selectedRegency.lat, selectedRegency.lng],
+        11,
+        {
+          duration: 1.2,
+        },
+      );
     }
   }, [selectedRegency]);
 
   // Quick Bounds Navigation
-  const jumpToBounds = (target: 'ntb' | 'lombok' | 'sumbawa' | 'rinjani' | 'tambora') => {
+  const jumpToBounds = (
+    target: "ntb" | "lombok" | "sumbawa" | "rinjani" | "tambora",
+  ) => {
     if (!mapInstanceRef.current) return;
     switch (target) {
-      case 'ntb':
-        mapInstanceRef.current.flyTo([-8.65, 117.20], 8.5, { duration: 1.0 });
+      case "ntb":
+        mapInstanceRef.current.flyTo([-8.65, 117.2], 8.5, { duration: 1.0 });
         break;
-      case 'lombok':
+      case "lombok":
         mapInstanceRef.current.flyTo([-8.58, 116.32], 10, { duration: 1.0 });
         break;
-      case 'sumbawa':
-        mapInstanceRef.current.flyTo([-8.60, 117.80], 9, { duration: 1.0 });
+      case "sumbawa":
+        mapInstanceRef.current.flyTo([-8.6, 117.8], 9, { duration: 1.0 });
         break;
-      case 'rinjani':
+      case "rinjani":
         mapInstanceRef.current.flyTo([-8.42, 116.458], 12, { duration: 1.0 });
         break;
-      case 'tambora':
+      case "tambora":
         mapInstanceRef.current.flyTo([-8.25, 117.96], 12, { duration: 1.0 });
         break;
     }
@@ -592,37 +766,39 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
         <div className="bg-slate-900/90 backdrop-blur-md px-2.5 py-1 rounded-lg border border-slate-700/80 shadow-lg flex items-center gap-1.5 text-xs">
           <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
           <span className="font-bold text-sky-400">OpenStreetMap</span>
-          <span className="text-[10px] text-slate-400 hidden sm:inline">· NTB (Lombok & Sumbawa)</span>
+          <span className="text-[10px] text-slate-400 hidden sm:inline">
+            · NTB (Lombok & Sumbawa)
+          </span>
         </div>
 
         <div className="bg-slate-900/90 backdrop-blur-md p-1 rounded-lg border border-slate-700/80 shadow-lg flex items-center gap-1">
           <button
-            onClick={() => jumpToBounds('ntb')}
+            onClick={() => jumpToBounds("ntb")}
             className="px-2.5 py-1 text-xs font-semibold rounded bg-sky-600/30 text-sky-300 hover:bg-sky-600/50 border border-sky-500/40 transition-colors"
           >
             Fokus NTB
           </button>
           <button
-            onClick={() => jumpToBounds('lombok')}
+            onClick={() => jumpToBounds("lombok")}
             className="px-2 py-1 text-xs font-medium rounded text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
           >
             P. Lombok
           </button>
           <button
-            onClick={() => jumpToBounds('sumbawa')}
+            onClick={() => jumpToBounds("sumbawa")}
             className="px-2 py-1 text-xs font-medium rounded text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
           >
             P. Sumbawa
           </button>
           <button
-            onClick={() => jumpToBounds('rinjani')}
+            onClick={() => jumpToBounds("rinjani")}
             className="px-2 py-1 text-xs font-medium rounded text-amber-300 hover:bg-amber-950/50 hover:text-amber-200 transition-colors flex items-center gap-1"
           >
             <Mountain className="w-3 h-3 text-amber-400" />
             G. Rinjani
           </button>
           <button
-            onClick={() => jumpToBounds('tambora')}
+            onClick={() => jumpToBounds("tambora")}
             className="px-2 py-1 text-xs font-medium rounded text-emerald-300 hover:bg-emerald-950/50 hover:text-emerald-200 transition-colors flex items-center gap-1"
           >
             <Mountain className="w-3 h-3 text-emerald-400" />
@@ -649,14 +825,16 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
                   Tipe Peta OpenStreetMap
                 </span>
                 <div className="grid grid-cols-2 gap-1.5">
-                  {(Object.keys(TILE_LAYERS) as Array<keyof typeof TILE_LAYERS>).map((key) => (
+                  {(
+                    Object.keys(TILE_LAYERS) as Array<keyof typeof TILE_LAYERS>
+                  ).map((key) => (
                     <button
                       key={key}
                       onClick={() => setActiveTile(key)}
                       className={`px-2 py-1.5 rounded text-left truncate transition-colors ${
                         activeTile === key
-                          ? 'bg-sky-600 text-white font-medium'
-                          : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700'
+                          ? "bg-sky-600 text-white font-medium"
+                          : "bg-slate-800/80 text-slate-300 hover:bg-slate-700"
                       }`}
                     >
                       {TILE_LAYERS[key].name}
@@ -734,6 +912,19 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
                       className="rounded accent-sky-500"
                     />
                   </label>
+
+                  <label className="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/60 cursor-pointer">
+                    <span className="flex items-center gap-2 text-slate-200">
+                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                      Pelabuhan Maritim BMKG
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={showPorts}
+                      onChange={(e) => setShowPorts(e.target.checked)}
+                      className="rounded accent-sky-500"
+                    />
+                  </label>
                 </div>
               </div>
             </div>
@@ -741,38 +932,63 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
         </div>
       </div>
 
-      {/* Bottom Left: Map Legend */}
-      <div className="absolute bottom-3 left-3 z-[400] bg-slate-900/90 backdrop-blur-md p-2.5 rounded-xl border border-slate-700/80 shadow-lg text-[11px] max-w-[280px]">
-        <div className="font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-          <span>Legenda Potensi Bencana NTB</span>
-          <span className="text-[10px] text-slate-400">BMKG / PVMBG</span>
-        </div>
-        <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-slate-300">
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-red-600 inline-block shadow"></span>
-            <span>Gempa Terkini</span>
+      {/* Bottom Left: Map Legend (Collapsible) */}
+      <div className="absolute bottom-3 left-3 z-[400]">
+        {showLegend ? (
+          <div className="bg-slate-900/90 backdrop-blur-md p-2.5 rounded-xl border border-slate-700/80 shadow-lg text-[11px] max-w-[280px]">
+            <div className="font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
+              <span>Legenda Potensi Bencana NTB</span>
+              <button
+                onClick={() => setShowLegend(false)}
+                className="text-[10px] text-slate-400 hover:text-white transition-colors px-1"
+                title="Minimize"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-slate-300">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full bg-red-600 inline-block shadow"></span>
+                <span>Gempa Terkini</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+                <span>Gempa M 4.5 - 5.9</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-0.5 bg-red-500 inline-block border-b-2 border-dashed border-red-500"></span>
+                <span>Sesar Naik Flores</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-0.5 bg-amber-500 inline-block border-b-2 border-dotted border-amber-500"></span>
+                <span>Megathrust S. NTB</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span>🌋</span>
+                <span>Gunung Api Aktif</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-sky-600 inline-block"></span>
+                <span>Cuaca Kab/Kota</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-4 h-4 flex items-center justify-center bg-indigo-900 rounded-full border border-indigo-400 text-[8px]">
+                  ⚓
+                </span>
+                <span>Pelabuhan</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
-            <span>Gempa M 4.5 - 5.9</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 bg-red-500 inline-block border-b-2 border-dashed border-red-500"></span>
-            <span>Sesar Naik Flores</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-0.5 bg-amber-500 inline-block border-b-2 border-dotted border-amber-500"></span>
-            <span>Megathrust S. NTB</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span>🌋</span>
-            <span>Gunung Api Aktif</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-sm bg-sky-600 inline-block"></span>
-            <span>Cuaca Kab/Kota</span>
-          </div>
-        </div>
+        ) : (
+          <button
+            onClick={() => setShowLegend(true)}
+            className="bg-slate-900/90 backdrop-blur-md p-2 rounded-lg border border-slate-700/80 shadow-lg text-xs text-slate-300 hover:text-white hover:border-sky-500/50 transition-colors flex items-center gap-1.5"
+            title="Tampilkan Legenda"
+          >
+            <Eye className="w-3.5 h-3.5 text-sky-400" />
+            <span>Legenda</span>
+          </button>
+        )}
       </div>
     </div>
   );
