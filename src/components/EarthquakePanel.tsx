@@ -1,6 +1,15 @@
-import React, { useState } from 'react';
-import { EarthquakeItem } from '../types/bmkg';
-import { Activity, ShieldAlert, MapPin, Radio, Compass, ExternalLink, Image as ImageIcon, Search } from 'lucide-react';
+import React, { useState } from "react";
+import { EarthquakeItem } from "../types/bmkg";
+import {
+  Activity,
+  ShieldAlert,
+  MapPin,
+  Radio,
+  Compass,
+  ExternalLink,
+  Image as ImageIcon,
+  Search,
+} from "lucide-react";
 
 interface EarthquakePanelProps {
   autoGempa: EarthquakeItem | null;
@@ -17,14 +26,18 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
   selectedQuake,
   onSelectQuake,
 }) => {
-  const [filterMode, setFilterMode] = useState<'all' | 'ntb' | 'felt'>('ntb');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filterMode, setFilterMode] = useState<"all" | "ntb" | "felt">("ntb");
+  const [searchQuery, setSearchQuery] = useState("");
   const [showShakemapModal, setShowShakemapModal] = useState(false);
 
   // Filtered List
-  const currentList = filterMode === 'felt' ? feltQuakes : recentQuakes;
+  const currentList = filterMode === "felt" ? feltQuakes : recentQuakes;
   const filteredQuakes = currentList.filter((q) => {
-    if (filterMode === 'ntb' && !q.isNtbArea && (q.distanceToNTBKm ?? 999) > 350) {
+    if (
+      filterMode === "ntb" &&
+      !q.isNtbArea &&
+      (q.distanceToNTBKm ?? 999) > 350
+    ) {
       return false;
     }
     if (searchQuery) {
@@ -41,7 +54,9 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Activity className="w-5 h-5 text-red-500" />
-            <h2 className="text-base font-bold text-white tracking-tight">Monitoring Gempa Bumi BMKG</h2>
+            <h2 className="text-base font-bold text-white tracking-tight">
+              Monitoring Gempa Bumi BMKG
+            </h2>
           </div>
           <span className="text-[11px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
             Sensor TEWS
@@ -54,14 +69,20 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
             <div className="flex items-start justify-between gap-3 mb-2">
               <div className="flex items-center gap-2">
                 <div className="w-12 h-12 rounded-lg bg-red-600/20 border border-red-500/50 flex flex-col items-center justify-center shrink-0">
-                  <span className="text-[9px] uppercase font-bold text-red-300">Magnitudo</span>
-                  <span className="text-lg font-mono font-bold text-white leading-none">{autoGempa.Magnitude}</span>
+                  <span className="text-[9px] uppercase font-bold text-red-300">
+                    Magnitudo
+                  </span>
+                  <span className="text-lg font-mono font-bold text-white leading-none">
+                    {autoGempa.Magnitude}
+                  </span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold uppercase tracking-wider text-red-400 block">
                     Gempa Bumi Terkini (Auto BMKG)
                   </span>
-                  <h3 className="font-bold text-sm text-slate-100 line-clamp-1">{autoGempa.Wilayah}</h3>
+                  <h3 className="font-bold text-sm text-slate-100 line-clamp-1">
+                    {autoGempa.Wilayah}
+                  </h3>
                   <div className="flex items-center gap-2 text-[11px] text-slate-400 font-mono mt-0.5">
                     <span>{autoGempa.Tanggal}</span>
                     <span>·</span>
@@ -80,16 +101,28 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
             {/* Metrics Grid */}
             <div className="grid grid-cols-3 gap-2 bg-slate-950/60 p-2 rounded-lg text-xs border border-slate-800/80 mb-2.5">
               <div>
-                <span className="text-slate-500 block text-[10px]">Kedalaman</span>
-                <span className="font-mono text-slate-200 font-semibold">{autoGempa.Kedalaman}</span>
+                <span className="text-slate-500 block text-[10px]">
+                  Kedalaman
+                </span>
+                <span className="font-mono text-slate-200 font-semibold">
+                  {autoGempa.Kedalaman}
+                </span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[10px]">Jarak ke NTB</span>
-                <span className="font-mono text-amber-300 font-semibold">{autoGempa.distanceToNTBKm ?? '-'} km</span>
+                <span className="text-slate-500 block text-[10px]">
+                  Jarak ke NTB
+                </span>
+                <span className="font-mono text-amber-300 font-semibold">
+                  {autoGempa.distanceToNTBKm ?? "-"} km
+                </span>
               </div>
               <div>
-                <span className="text-slate-500 block text-[10px]">Potensi Tsunami</span>
-                <span className="text-emerald-400 font-semibold text-[11px] truncate block">{autoGempa.Potensi}</span>
+                <span className="text-slate-500 block text-[10px]">
+                  Potensi Tsunami
+                </span>
+                <span className="text-emerald-400 font-semibold text-[11px] truncate block">
+                  {autoGempa.Potensi}
+                </span>
               </div>
             </div>
 
@@ -121,25 +154,37 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
       <div className="p-3 border-b border-slate-800 bg-slate-950/40 shrink-0 space-y-2">
         <div className="flex items-center gap-1 p-1 bg-slate-950 rounded-lg border border-slate-800 text-xs font-medium">
           <button
-            onClick={() => setFilterMode('ntb')}
+            onClick={() => setFilterMode("ntb")}
             className={`flex-1 py-1.5 rounded-md transition-colors ${
-              filterMode === 'ntb' ? 'bg-sky-600 text-white font-semibold shadow' : 'text-slate-400 hover:text-slate-200'
+              filterMode === "ntb"
+                ? "bg-sky-600 text-white font-semibold shadow"
+                : "text-slate-400 hover:text-slate-200"
             }`}
           >
-            Wilayah NTB ({recentQuakes.filter((q) => q.isNtbArea || (q.distanceToNTBKm ?? 999) <= 350).length})
+            Wilayah NTB (
+            {
+              recentQuakes.filter(
+                (q) => q.isNtbArea || (q.distanceToNTBKm ?? 999) <= 350,
+              ).length
+            }
+            )
           </button>
           <button
-            onClick={() => setFilterMode('all')}
+            onClick={() => setFilterMode("all")}
             className={`flex-1 py-1.5 rounded-md transition-colors ${
-              filterMode === 'all' ? 'bg-sky-600 text-white font-semibold shadow' : 'text-slate-400 hover:text-slate-200'
+              filterMode === "all"
+                ? "bg-sky-600 text-white font-semibold shadow"
+                : "text-slate-400 hover:text-slate-200"
             }`}
           >
             15 Gempa M 5.0+
           </button>
           <button
-            onClick={() => setFilterMode('felt')}
+            onClick={() => setFilterMode("felt")}
             className={`flex-1 py-1.5 rounded-md transition-colors ${
-              filterMode === 'felt' ? 'bg-sky-600 text-white font-semibold shadow' : 'text-slate-400 hover:text-slate-200'
+              filterMode === "felt"
+                ? "bg-sky-600 text-white font-semibold shadow"
+                : "text-slate-400 hover:text-slate-200"
             }`}
           >
             Gempa Dirasakan
@@ -168,7 +213,8 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
         ) : (
           filteredQuakes.map((quake, idx) => {
             const mag = parseFloat(quake.Magnitude) || 4.0;
-            const isSelected = selectedQuake && selectedQuake.Coordinates === quake.Coordinates;
+            const isSelected =
+              selectedQuake && selectedQuake.Coordinates === quake.Coordinates;
 
             return (
               <div
@@ -176,10 +222,10 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
                 onClick={() => onSelectQuake(quake)}
                 className={`p-3 rounded-lg border cursor-pointer transition-all ${
                   isSelected
-                    ? 'bg-sky-950/40 border-sky-500 ring-1 ring-sky-500'
+                    ? "bg-sky-950/40 border-sky-500 ring-1 ring-sky-500"
                     : quake.isNtbArea
-                    ? 'bg-slate-950/80 border-red-900/60 hover:border-red-600'
-                    : 'bg-slate-950/50 border-slate-800 hover:border-slate-700'
+                      ? "bg-slate-950/80 border-red-900/60 hover:border-red-600"
+                      : "bg-slate-950/50 border-slate-800 hover:border-slate-700"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-1.5">
@@ -187,10 +233,10 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
                     <span
                       className={`text-xs font-mono font-bold px-2 py-0.5 rounded ${
                         mag >= 6.0
-                          ? 'bg-red-600 text-white'
+                          ? "bg-red-600 text-white"
                           : mag >= 5.0
-                          ? 'bg-amber-600 text-white'
-                          : 'bg-yellow-500 text-slate-950'
+                            ? "bg-amber-600 text-white"
+                            : "bg-yellow-500 text-slate-950"
                       }`}
                     >
                       M {quake.Magnitude}
@@ -207,16 +253,20 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
                   )}
                 </div>
 
-                <p className="text-xs text-slate-200 font-medium line-clamp-2 mb-2">{quake.Wilayah}</p>
+                <p className="text-xs text-slate-200 font-medium line-clamp-2 mb-2">
+                  {quake.Wilayah}
+                </p>
 
                 <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono pt-1.5 border-t border-slate-800/80">
                   <span>Kedalaman: {quake.Kedalaman}</span>
-                  <span>Jarak NTB: {quake.distanceToNTBKm ?? '-'} km</span>
+                  <span>Jarak NTB: {quake.distanceToNTBKm ?? "-"} km</span>
                 </div>
 
                 {quake.Dirasakan && (
                   <div className="mt-1.5 text-[11px] bg-slate-900/80 p-1.5 rounded text-yellow-300 border border-slate-800">
-                    <span className="text-slate-400 text-[10px] block">Dirasakan:</span>
+                    <span className="text-slate-400 text-[10px] block">
+                      Dirasakan:
+                    </span>
                     <span>{quake.Dirasakan}</span>
                   </div>
                 )}
@@ -228,10 +278,12 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
 
       {/* Shakemap Modal */}
       {showShakemapModal && autoGempa?.shakemapUrl && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-700 rounded-xl max-w-xl w-full p-4 overflow-hidden shadow-2xl">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-bold text-sm text-white">Peta Tingkat Guncangan (Shakemap BMKG)</h3>
+              <h3 className="font-bold text-sm text-white">
+                Peta Tingkat Guncangan (Shakemap BMKG)
+              </h3>
               <button
                 onClick={() => setShowShakemapModal(false)}
                 className="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-800"

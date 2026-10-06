@@ -1,9 +1,20 @@
-import React from 'react';
-import { Volume2, VolumeX, Bell, BellOff, Code2, PhoneCall, RefreshCw, AlertTriangle } from 'lucide-react';
+import React from "react";
+import {
+  Volume2,
+  VolumeX,
+  Bell,
+  BellOff,
+  Code2,
+  PhoneCall,
+  RefreshCw,
+  AlertTriangle,
+} from "lucide-react";
 
 interface NavbarProps {
-  activeView: 'map' | 'weather' | 'quakes' | 'laravel' | 'contacts';
-  setActiveView: (view: 'map' | 'weather' | 'quakes' | 'laravel' | 'contacts') => void;
+  activeView: "map" | "weather" | "quakes" | "laravel" | "contacts";
+  setActiveView: (
+    view: "map" | "weather" | "quakes" | "laravel" | "contacts",
+  ) => void;
   isSoundEnabled: boolean;
   onToggleSound: () => void;
   hasNotificationPermission: boolean;
@@ -33,56 +44,54 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center gap-3">
           <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></div>
           <button
-            onClick={() => setActiveView('map')}
+            onClick={() => setActiveView("map")}
             className="text-base sm:text-lg font-bold tracking-tight text-white hover:text-sky-400 transition-colors whitespace-nowrap"
           >
-            SIAGA BENCANA NTB
+            Pusdalops BPBD NTB
           </button>
         </div>
 
         {/* Zone 2: Navigation views with clean typography */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-300">
           <button
-            onClick={() => setActiveView('map')}
+            onClick={() => setActiveView("map")}
             className={`transition-colors hover:text-white whitespace-nowrap pb-0.5 ${
-              activeView === 'map' ? 'text-sky-400 border-b-2 border-sky-400 font-semibold' : ''
+              activeView === "map"
+                ? "text-sky-400 border-b-2 border-sky-400 font-semibold"
+                : ""
             }`}
           >
             Peta Monitoring NTB
           </button>
 
           <button
-            onClick={() => setActiveView('weather')}
+            onClick={() => setActiveView("weather")}
             className={`transition-colors hover:text-white whitespace-nowrap pb-0.5 ${
-              activeView === 'weather' ? 'text-sky-400 border-b-2 border-sky-400 font-semibold' : ''
+              activeView === "weather"
+                ? "text-sky-400 border-b-2 border-sky-400 font-semibold"
+                : ""
             }`}
           >
             Prakiraan Cuaca Kab/Kota
           </button>
 
           <button
-            onClick={() => setActiveView('quakes')}
+            onClick={() => setActiveView("quakes")}
             className={`transition-colors hover:text-white whitespace-nowrap pb-0.5 ${
-              activeView === 'quakes' ? 'text-sky-400 border-b-2 border-sky-400 font-semibold' : ''
+              activeView === "quakes"
+                ? "text-sky-400 border-b-2 border-sky-400 font-semibold"
+                : ""
             }`}
           >
             Daftar Gempa BMKG
           </button>
 
           <button
-            onClick={() => setActiveView('laravel')}
+            onClick={() => setActiveView("contacts")}
             className={`transition-colors hover:text-white whitespace-nowrap pb-0.5 flex items-center gap-1.5 ${
-              activeView === 'laravel' ? 'text-red-400 border-b-2 border-red-400 font-semibold' : ''
-            }`}
-          >
-            <Code2 className="w-3.5 h-3.5" />
-            <span>Kode Laravel</span>
-          </button>
-
-          <button
-            onClick={() => setActiveView('contacts')}
-            className={`transition-colors hover:text-white whitespace-nowrap pb-0.5 flex items-center gap-1.5 ${
-              activeView === 'contacts' ? 'text-sky-400 border-b-2 border-sky-400 font-semibold' : ''
+              activeView === "contacts"
+                ? "text-sky-400 border-b-2 border-sky-400 font-semibold"
+                : ""
             }`}
           >
             <PhoneCall className="w-3.5 h-3.5" />
@@ -95,37 +104,55 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Sound Toggle */}
           <button
             onClick={onToggleSound}
-            title={isSoundEnabled ? 'Sirine Darurat Aktif (Klik untuk Matikan)' : 'Sirine Darurat Bisu (Klik untuk Aktifkan)'}
+            title={
+              isSoundEnabled
+                ? "Sirine Darurat Aktif (Klik untuk Matikan)"
+                : "Sirine Darurat Bisu (Klik untuk Aktifkan)"
+            }
             className={`p-2 rounded-lg border transition-colors ${
               isSoundEnabled
-                ? 'bg-amber-950/40 border-amber-600/50 text-amber-300 hover:bg-amber-900/50'
-                : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200'
+                ? "bg-amber-950/40 border-amber-600/50 text-amber-300 hover:bg-amber-900/50"
+                : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200"
             }`}
           >
-            {isSoundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
+            {isSoundEnabled ? (
+              <Volume2 className="w-4 h-4" />
+            ) : (
+              <VolumeX className="w-4 h-4" />
+            )}
           </button>
 
           {/* Browser Notification Button */}
           <button
             onClick={onRequestNotification}
-            title={hasNotificationPermission ? 'Notifikasi Browser Aktif' : 'Aktifkan Notifikasi Desktop'}
+            title={
+              hasNotificationPermission
+                ? "Notifikasi Browser Aktif"
+                : "Aktifkan Notifikasi Desktop"
+            }
             className={`p-2 rounded-lg border transition-colors ${
               hasNotificationPermission
-                ? 'bg-sky-950/40 border-sky-600/50 text-sky-400 hover:bg-sky-900/50'
-                : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200'
+                ? "bg-sky-950/40 border-sky-600/50 text-sky-400 hover:bg-sky-900/50"
+                : "bg-slate-800/80 border-slate-700 text-slate-400 hover:text-slate-200"
             }`}
           >
-            {hasNotificationPermission ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+            {hasNotificationPermission ? (
+              <Bell className="w-4 h-4" />
+            ) : (
+              <BellOff className="w-4 h-4" />
+            )}
           </button>
 
           {/* Refresh Data Button */}
           <button
             onClick={onRefresh}
             disabled={isRefreshing}
-            title={`Diperbarui: ${lastUpdated || 'Baru saja'}`}
+            title={`Diperbarui: ${lastUpdated || "Baru saja"}`}
             className="p-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700/80 transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-sky-400' : ''}`} />
+            <RefreshCw
+              className={`w-4 h-4 ${isRefreshing ? "animate-spin text-sky-400" : ""}`}
+            />
           </button>
 
           {/* Test Alert Button */}
@@ -143,32 +170,26 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Mobile Sub-Navigation Bar */}
       <div className="md:hidden flex items-center justify-around px-2 py-2 border-t border-slate-800/60 bg-slate-950 text-xs font-medium">
         <button
-          onClick={() => setActiveView('map')}
-          className={`py-1 px-2 rounded ${activeView === 'map' ? 'bg-sky-600/30 text-sky-400' : 'text-slate-400'}`}
+          onClick={() => setActiveView("map")}
+          className={`py-1 px-2 rounded ${activeView === "map" ? "bg-sky-600/30 text-sky-400" : "text-slate-400"}`}
         >
           Peta
         </button>
         <button
-          onClick={() => setActiveView('weather')}
-          className={`py-1 px-2 rounded ${activeView === 'weather' ? 'bg-sky-600/30 text-sky-400' : 'text-slate-400'}`}
+          onClick={() => setActiveView("weather")}
+          className={`py-1 px-2 rounded ${activeView === "weather" ? "bg-sky-600/30 text-sky-400" : "text-slate-400"}`}
         >
           Cuaca NTB
         </button>
         <button
-          onClick={() => setActiveView('quakes')}
-          className={`py-1 px-2 rounded ${activeView === 'quakes' ? 'bg-sky-600/30 text-sky-400' : 'text-slate-400'}`}
+          onClick={() => setActiveView("quakes")}
+          className={`py-1 px-2 rounded ${activeView === "quakes" ? "bg-sky-600/30 text-sky-400" : "text-slate-400"}`}
         >
           Gempa
         </button>
         <button
-          onClick={() => setActiveView('laravel')}
-          className={`py-1 px-2 rounded ${activeView === 'laravel' ? 'bg-red-600/30 text-red-400' : 'text-slate-400'}`}
-        >
-          Laravel
-        </button>
-        <button
-          onClick={() => setActiveView('contacts')}
-          className={`py-1 px-2 rounded ${activeView === 'contacts' ? 'bg-sky-600/30 text-sky-400' : 'text-slate-400'}`}
+          onClick={() => setActiveView("contacts")}
+          className={`py-1 px-2 rounded ${activeView === "contacts" ? "bg-sky-600/30 text-sky-400" : "text-slate-400"}`}
         >
           Kontak
         </button>
