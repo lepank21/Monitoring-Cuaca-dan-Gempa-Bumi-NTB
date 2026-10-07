@@ -1127,6 +1127,58 @@ app.get("/api/bmkg/nowcasting/ntb", async (_req, res) => {
   }
 });
 
+// 6. Proxy for Maritime Warning
+app.get("/api/bmkg/maritime/warning", async (_req, res) => {
+  try {
+    const raw = await fetchBMKG("https://maritim.bmkg.go.id/marine2026-data/warning/warnings.json", 6000);
+    const json = JSON.parse(raw);
+    res.json(json);
+  } catch (error: any) {
+    console.warn("BMKG Maritime fetch failed:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 7. Proxy for Maritime Ports List (CSV)
+app.get("/api/bmkg/maritime/ports", async (_req, res) => {
+  try {
+    const raw = await fetchBMKG("https://maritim.bmkg.go.id/marine2026-data/meta/list_lokasi_pelabuhan.csv", 6000);
+    const lines = raw.split('\n');
+    const ntbPorts = [];
+    for (let i = 1; i < lines.length; i++) {
+       const line = lines[i].trim();
+       if (!line) continue;
+       const cols = line.split(',');
+       if (cols[2] === "Nusa Tenggara Barat") {
+          ntbPorts.push({
+             id: cols[0],
+             name: cols[1],
+             province: cols[2],
+             lat: parseFloat(cols[3]),
+             lon: parseFloat(cols[4])
+          });
+       }
+    }
+    res.json(ntbPorts);
+  } catch (error: any) {
+    console.warn("BMKG Ports CSV fetch failed:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 8. Proxy for Maritime Port Weather
+app.get("/api/bmkg/maritime/port/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+    const raw = await fetchBMKG(`https://maritim.bmkg.go.id/marine2026-data/pelabuhan/${id}.json`, 6000);
+    const json = JSON.parse(raw);
+    res.json(json);
+  } catch (error: any) {
+    console.warn("BMKG Port Weather fetch failed:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Vite Middleware Integration for Development / Production
 async function setupVite() {
   if (process.env.NODE_ENV === "production") {

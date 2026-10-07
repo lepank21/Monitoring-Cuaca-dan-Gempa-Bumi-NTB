@@ -9,6 +9,8 @@ import {
   ExternalLink,
   Image as ImageIcon,
   Search,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 
 interface EarthquakePanelProps {
@@ -29,6 +31,7 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
   const [filterMode, setFilterMode] = useState<"all" | "ntb" | "felt">("ntb");
   const [searchQuery, setSearchQuery] = useState("");
   const [showShakemapModal, setShowShakemapModal] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(false);
 
   // Filtered List
   const currentList = filterMode === "felt" ? feltQuakes : recentQuakes;
@@ -48,22 +51,29 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
   });
 
   return (
-    <div className="flex flex-col h-full bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+    <div className={`pointer-events-auto flex flex-col bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl transition-all duration-300 ${isMinimized ? "flex-none h-auto" : "flex-1 min-h-0"}`}>
       {/* Header */}
-      <div className="p-4 border-b border-slate-800 shrink-0">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Activity className="w-5 h-5 text-red-500" />
-            <h2 className="text-base font-bold text-white tracking-tight">
-              Monitoring Gempa Bumi BMKG
-            </h2>
-          </div>
-          <span className="text-[11px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
-            Sensor TEWS
-          </span>
+      <div className="p-3 sm:p-4 border-b border-slate-800 shrink-0 flex items-center justify-between cursor-pointer hover:bg-slate-800/50 transition-colors" onClick={() => setIsMinimized(!isMinimized)}>
+        <div className="flex items-center gap-2">
+          <Activity className="w-5 h-5 text-red-500" />
+          <h2 className="text-base font-bold text-white tracking-tight">
+            Monitoring Gempa
+          </h2>
         </div>
+        <div className="flex items-center gap-2">
+          <span className="hidden sm:inline-block text-[11px] font-mono text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+            TEWS
+          </span>
+          <button className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors">
+             {isMinimized ? <ChevronDown className="w-4 h-4" /> : <ChevronUp className="w-4 h-4" />}
+          </button>
+        </div>
+      </div>
 
-        {/* Auto Gempa / Terkini Highlight Card */}
+      {!isMinimized && (
+        <>
+          <div className="p-4 border-b border-slate-800 shrink-0">
+            {/* Auto Gempa / Terkini Highlight Card */}
         {autoGempa && (
           <div className="bg-gradient-to-br from-slate-950 to-slate-900 border border-red-900/60 rounded-xl p-3.5 shadow-md relative overflow-hidden">
             <div className="flex items-start justify-between gap-3 mb-2">
@@ -275,6 +285,8 @@ export const EarthquakePanel: React.FC<EarthquakePanelProps> = ({
           })
         )}
       </div>
+      </>
+      )}
 
       {/* Shakemap Modal */}
       {showShakemapModal && autoGempa?.shakemapUrl && (

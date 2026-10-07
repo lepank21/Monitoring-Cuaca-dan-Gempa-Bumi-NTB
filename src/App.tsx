@@ -93,9 +93,7 @@ export default function App() {
             fetch("/api/bmkg/gempabumi/gempadirasakan").then((r) => r.json()),
             fetch("/api/bmkg/cuaca/ntb").then((r) => r.json()),
             fetch("/api/bmkg/nowcasting/ntb").then((r) => r.json()),
-            fetch(
-              "https://maritim.bmkg.go.id/marine2026-data/warning/warnings.json",
-            )
+            fetch("/api/bmkg/maritime/warning")
               .then((r) => (r.ok ? r.json() : null))
               .catch(() => null),
           ]);
@@ -274,32 +272,27 @@ export default function App() {
 
         {/* View Switcher: Map vs Weather vs Quakes vs Laravel vs Contacts */}
         {activeView === "map" && (
-          <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-[550px] h-full">
-            {/* Left Column: Leaflet OpenStreetMap (8 Cols on Desktop) */}
-            <div className="lg:col-span-7 xl:col-span-8 h-[55vh] lg:h-full min-h-[400px]">
-              <DisasterMap
-                autoGempa={autoGempa}
-                recentQuakes={recentQuakes}
-                weatherRegencies={weatherRegencies}
-                volcanoes={volcanoes}
-                districts={districts}
-                selectedQuake={selectedQuake}
-                onSelectQuake={(q) => setSelectedQuake(q)}
-                selectedRegency={selectedRegency}
-                onSelectRegency={(r) => setSelectedRegency(r)}
-              />
-            </div>
+          <div className="flex-1 relative min-h-[550px] h-full rounded-xl overflow-hidden shadow-xl border border-slate-700">
+            <DisasterMap
+              autoGempa={autoGempa}
+              recentQuakes={recentQuakes}
+              weatherRegencies={weatherRegencies}
+              volcanoes={volcanoes}
+              districts={districts}
+              selectedQuake={selectedQuake}
+              onSelectQuake={(q) => setSelectedQuake(q)}
+              selectedRegency={selectedRegency}
+              onSelectRegency={(r) => setSelectedRegency(r)}
+            />
 
-            {/* Right Column: Live Quake Feeds & Monitoring (5 Cols on Desktop) */}
-            <div className="lg:col-span-5 xl:col-span-4 h-[55vh] lg:h-full min-h-[400px]">
+            {/* Overlay Quake Panel */}
+            <div className="absolute top-4 right-4 bottom-4 z-[400] flex flex-col pointer-events-none w-full max-w-[400px]">
               <EarthquakePanel
                 autoGempa={autoGempa}
                 recentQuakes={recentQuakes}
                 feltQuakes={feltQuakes}
                 selectedQuake={selectedQuake}
-                onSelectQuake={(q) => {
-                  setSelectedQuake(q);
-                }}
+                onSelectQuake={(q) => setSelectedQuake(q)}
               />
             </div>
           </div>

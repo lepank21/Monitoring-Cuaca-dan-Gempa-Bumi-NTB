@@ -110,16 +110,9 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
   useEffect(() => {
     const fetchPorts = async () => {
       try {
-        const res = await fetch(
-          "https://maritim.bmkg.go.id/marine2026-data/meta/port_province.json",
-        );
+        const res = await fetch("/api/bmkg/maritime/ports");
         const data = await res.json();
-        const ntbProvince = data.data.find(
-          (d: any) => d.province === "Nusa Tenggara Barat",
-        );
-        if (ntbProvince && ntbProvince.ports) {
-          setNtbPorts(ntbProvince.ports);
-        }
+        setNtbPorts(data);
       } catch (err) {
         console.error("Failed to fetch NTB ports:", err);
       }
@@ -384,9 +377,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
       marker.on("popupopen", async () => {
         try {
-          const res = await fetch(
-            `https://maritim.bmkg.go.id/marine2026-data/pelabuhan/${port.id}.json`,
-          );
+          const res = await fetch(`/api/bmkg/maritime/port/${port.id}`);
           if (!res.ok) throw new Error("API failed");
           const data = await res.json();
 
@@ -396,8 +387,23 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
           // API returns forecast in forecast_day1 array (hourly data)
           const forecastArr = data.forecast_day1 || data.data || [];
           if (forecastArr.length > 0) {
+            const nowTime = new Date().getTime();
+            
+            // Filter future or current hour forecasts
+            let upcomingForecasts = forecastArr.filter((f: any) => {
+              const isoTime = f.time.replace(" UTC", "Z").replace(" ", "T");
+              const fTime = new Date(isoTime).getTime();
+              return fTime >= nowTime - (60 * 60 * 1000);
+            });
+
+            // Fallback if the array is empty (e.g. data is old or end of day)
+            if (upcomingForecasts.length === 0) {
+               upcomingForecasts = forecastArr.slice(-3);
+            }
+
             // Show the next 3 forecast entries
-            const forecasts = forecastArr.slice(0, 3);
+            const forecasts = upcomingForecasts.slice(0, 3);
+            
             forecastHtml = '<div class="space-y-2 mt-2">';
             forecasts.forEach((f: any) => {
               // API time format: "2026-10-06 00:00 UTC" → convert to ISO
@@ -807,8 +813,8 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
         </div>
       </div>
 
-      {/* Top Right: OSM Style Switcher & Disaster Layers */}
-      <div className="absolute top-3 right-3 z-[400] flex items-center gap-2">
+      {/* Top Left Below: OSM Style Switcher & Disaster Layers */}
+      <div className="absolute top-14 left-3 z-[400] flex items-center gap-2">
         <div className="relative">
           <button
             onClick={() => setShowLayersDropdown(!showLayersDropdown)}
@@ -819,7 +825,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
           </button>
 
           {showLayersDropdown && (
-            <div className="absolute right-0 mt-2 w-64 p-3 bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl text-xs space-y-3 z-50">
+            <div className="absolute left-0 mt-2 w-64 p-3 bg-slate-900/95 backdrop-blur-xl border border-slate-700 rounded-xl shadow-2xl text-xs space-y-3 z-50">
               <div>
                 <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-2">
                   Tipe Peta OpenStreetMap
