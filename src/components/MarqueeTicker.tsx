@@ -1,6 +1,25 @@
 import React, { useEffect, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 
+const KODE_WILAYAH: Record<string, string> = {
+  "5201": "Kab. Lombok Barat",
+  "5202": "Kab. Lombok Tengah",
+  "5203": "Kab. Lombok Timur",
+  "5204": "Kab. Sumbawa",
+  "5205": "Kab. Dompu",
+  "5206": "Kab. Bima",
+  "5207": "Kab. Sumbawa Barat",
+  "5208": "Kab. Lombok Utara",
+  "5271": "Kota Mataram",
+  "5272": "Kota Bima"
+};
+
+const getWilayah = (kode_referensi?: string) => {
+  if (!kode_referensi) return "";
+  const kode = kode_referensi.substring(0, 4);
+  return KODE_WILAYAH[kode] ? `${KODE_WILAYAH[kode]} - ` : "";
+};
+
 export const MarqueeTicker: React.FC = () => {
   const [bencana, setBencana] = useState<any[]>([]);
 
@@ -30,8 +49,9 @@ export const MarqueeTicker: React.FC = () => {
         <div className="absolute whitespace-nowrap animate-[marquee_40s_linear_infinite] flex items-center h-full">
           {bencana.map((item, i) => (
             <React.Fragment key={item.id || i}>
+              <span className="text-xs font-bold text-red-400 mr-1">{getWilayah(item.kode_referensi)}</span>
               <span className="text-xs font-semibold mr-2">{item.nama}</span>
-              <span className="text-xs text-red-300 mr-2">
+              <span className="text-xs text-red-200 mr-2">
                 ({item.tanggal} - Terdampak: {item.desa_terdampak}, {item.penduduk_terdampak})
               </span>
               {i !== bencana.length - 1 && (
@@ -43,8 +63,9 @@ export const MarqueeTicker: React.FC = () => {
           <span className="mx-4 text-red-500/50">✦</span>
           {bencana.map((item, i) => (
             <React.Fragment key={`dup-${item.id || i}`}>
+              <span className="text-xs font-bold text-red-400 mr-1">{getWilayah(item.kode_referensi)}</span>
               <span className="text-xs font-semibold mr-2">{item.nama}</span>
-              <span className="text-xs text-red-300 mr-2">
+              <span className="text-xs text-red-200 mr-2">
                 ({item.tanggal} - Terdampak: {item.desa_terdampak}, {item.penduduk_terdampak})
               </span>
               {i !== bencana.length - 1 && (
