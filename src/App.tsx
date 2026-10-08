@@ -11,6 +11,7 @@ import { WeatherForecastPanel } from "./components/WeatherForecastPanel";
 import { NowcastingBanner } from "./components/NowcastingBanner";
 import { LaravelExportModal } from "./components/LaravelExportModal";
 import { EmergencyContactsModal } from "./components/EmergencyContactsModal";
+import { MarqueeTicker } from "./components/MarqueeTicker";
 import {
   NotificationToast,
   AlertToastData,
@@ -46,6 +47,7 @@ export default function App() {
   const [districts, setDistricts] = useState<DistrictInfo[]>([]);
   const [volcanoes, setVolcanoes] = useState<VolcanoInfo[]>([]);
   const [marineWarning, setMarineWarning] = useState<any>(null);
+  const [nomorPenting, setNomorPenting] = useState<any[]>([]);
 
   // Selection states for map interaction
   const [selectedQuake, setSelectedQuake] = useState<EarthquakeItem | null>(
@@ -79,6 +81,13 @@ export default function App() {
         if (data.volcanoes) setVolcanoes(data.volcanoes);
       })
       .catch((err) => console.warn("Error fetching NTB info:", err));
+
+    fetch("/api/siaga/nomor-penting")
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setNomorPenting(data);
+      })
+      .catch((err) => console.warn("Error fetching nomor penting:", err));
   }, []);
 
   // 2. Main Data Fetcher
@@ -367,7 +376,7 @@ export default function App() {
 
         {activeView === "contacts" && (
           <div className="flex-1 pb-6">
-            <EmergencyContactsModal districts={districts} />
+            <EmergencyContactsModal districts={districts} nomorPenting={nomorPenting} />
           </div>
         )}
       </main>
@@ -378,6 +387,9 @@ export default function App() {
         onClose={() => setToast(null)}
         onFocusMap={handleFocusMap}
       />
+
+      {/* Running Text Ticker at Bottom */}
+      <MarqueeTicker />
     </div>
   );
 }

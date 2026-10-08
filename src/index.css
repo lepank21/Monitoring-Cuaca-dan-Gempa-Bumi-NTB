@@ -64,6 +64,11 @@
   animation: quake-pulse 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
 }
 
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
 /* Custom Scrollbar for Alert Panels */
 ::-webkit-scrollbar {
   width: 6px;

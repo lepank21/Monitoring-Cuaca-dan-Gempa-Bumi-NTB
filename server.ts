@@ -1209,6 +1209,30 @@ app.get("/api/siaga/lapor", async (_req, res) => {
   }
 });
 
+// 10. Nomor Penting NTB
+app.get("/api/siaga/nomor-penting", async (_req, res) => {
+  try {
+    const raw = await fetchBMKG("https://siaga.ntbprov.go.id/api/mobile/nomor-penting", 8000);
+    const json = JSON.parse(raw);
+    res.json(json);
+  } catch (error: any) {
+    console.warn("Nomor Penting fetch failed:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 11. Kejadian Bencana NTB
+app.get("/api/siaga/kejadian-bencana", async (_req, res) => {
+  try {
+    const raw = await fetchBMKG("https://siaga.ntbprov.go.id/api/mobile/kejadian-bencana/", 8000);
+    const json = JSON.parse(raw);
+    res.json(json);
+  } catch (error: any) {
+    console.warn("Kejadian Bencana fetch failed:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Vite Middleware Integration for Development / Production
 async function setupVite() {
   if (process.env.NODE_ENV === "production") {

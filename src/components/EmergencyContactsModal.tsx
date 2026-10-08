@@ -10,12 +10,21 @@ import {
 import { DistrictInfo } from "../types/bmkg";
 
 interface EmergencyContactsProps {
-  districts: DistrictInfo[];
+  districts?: DistrictInfo[];
+  nomorPenting?: any[];
 }
 
 export const EmergencyContactsModal: React.FC<EmergencyContactsProps> = ({
-  districts,
+  nomorPenting,
 }) => {
+  const groupedContacts =
+    nomorPenting?.reduce((acc: any, curr: any) => {
+      const cat = curr.category || "Lainnya";
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(curr);
+      return acc;
+    }, {}) || {};
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-6 shadow-xl">
       <div className="mb-6 border-b border-slate-800 pb-4">
@@ -26,13 +35,13 @@ export const EmergencyContactsModal: React.FC<EmergencyContactsProps> = ({
           </h2>
         </div>
         <p className="text-xs text-slate-400">
-          Nomor darurat, Pusdalops PB BPBD, Kantor SAR BASARNAS Mataram, dan
-          Stasiun BMKG NTB yang dapat dihubungi 24 Jam.
+          Nomor darurat penting dan layanan kesehatan yang dapat dihubungi di
+          Provinsi Nusa Tenggara Barat.
         </p>
       </div>
 
       {/* Emergency Call Numbers 24/7 */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
         <div className="bg-red-950/40 border border-red-500/50 rounded-xl p-3.5 flex items-center gap-3">
           <div className="p-2.5 rounded-lg bg-red-600 text-white shrink-0">
             <Siren className="w-5 h-5 animate-bounce" />
@@ -76,79 +85,55 @@ export const EmergencyContactsModal: React.FC<EmergencyContactsProps> = ({
             </span>
           </div>
         </div>
-
-        <div className="bg-blue-950/40 border border-blue-500/50 rounded-xl p-3.5 flex items-center gap-3">
-          <div className="p-2.5 rounded-lg bg-blue-600 text-white shrink-0">
-            <Radio className="w-5 h-5" />
-          </div>
-          <div>
-            <span className="text-[10px] text-blue-300 font-bold uppercase block">
-              BMKG Geofisika Mataram
-            </span>
-            <span className="text-base font-bold font-mono text-white">
-              (0370) 642137
-            </span>
-            <span className="text-[11px] text-slate-300 block">
-              Monitoring Gempa & Tsunami
-            </span>
-          </div>
-        </div>
       </div>
 
-      {/* 10 Regencies BPBD & PMI Directory */}
-      <div>
-        <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
-          <span>Kontak BPBD & Posko Siaga 10 Kabupaten / Kota NTB</span>
-        </h3>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {districts.map((dist) => (
-            <div
-              key={dist.id}
-              className="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between hover:border-slate-700 transition-colors"
-            >
-              <div className="mb-2">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="font-bold text-sm text-sky-400">
-                    {dist.name}
-                  </h4>
-                  <span className="text-[10px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                    Pulau {dist.island}
-                  </span>
-                </div>
-                <p className="text-xs text-amber-200/90 leading-tight">
-                  <span className="text-slate-400">Kerentanan: </span>
-                  {dist.riskLevel}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-800 font-mono">
-                <div>
-                  <span className="text-slate-500 block text-[10px] font-sans">
-                    BPBD Kabupaten/Kota:
-                  </span>
-                  <a
-                    href={`tel:${dist.bpbdPhone.replace(/[^0-9]/g, "")}`}
-                    className="text-white hover:text-sky-300 font-semibold flex items-center gap-1"
+      {/* Dynamic API Contacts */}
+      <div className="space-y-6">
+        {Object.keys(groupedContacts).length === 0 ? (
+          <div className="text-slate-400 text-sm italic">
+            Memuat data nomor penting dari server...
+          </div>
+        ) : (
+          Object.keys(groupedContacts).map((category) => (
+            <div key={category}>
+              <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2 border-b border-slate-800 pb-2">
+                <span className="text-sky-400 uppercase tracking-wider">
+                  {category}
+                </span>
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {groupedContacts[category].map((contact: any) => (
+                  <div
+                    key={contact.id}
+                    className="bg-slate-950/70 border border-slate-800 rounded-xl p-3.5 flex flex-col justify-between hover:border-slate-700 transition-colors"
                   >
-                    <span>{dist.bpbdPhone}</span>
-                  </a>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px] font-sans">
-                    Palang Merah Indonesia:
-                  </span>
-                  <a
-                    href={`tel:${dist.pmiPhone.replace(/[^0-9]/g, "")}`}
-                    className="text-slate-300 hover:text-sky-300 font-semibold flex items-center gap-1"
-                  >
-                    <span>{dist.pmiPhone}</span>
-                  </a>
-                </div>
+                    <div className="mb-2">
+                      <h4 className="font-bold text-sm text-white mb-1">
+                        {contact.name}
+                      </h4>
+                      {contact.address && (
+                        <p className="text-[11px] text-slate-400 leading-tight">
+                          {contact.address}
+                        </p>
+                      )}
+                    </div>
+                    {contact.phone && (
+                      <div className="pt-2 border-t border-slate-800 mt-1">
+                        <a
+                          href={`tel:${contact.phone.replace(/[^0-9+]/g, "")}`}
+                          className="text-sky-400 hover:text-sky-300 font-bold font-mono text-xs flex items-center gap-1.5"
+                        >
+                          <PhoneCall className="w-3.5 h-3.5" />
+                          <span>{contact.phone}</span>
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-          ))}
-        </div>
+          ))
+        )}
       </div>
     </div>
   );
