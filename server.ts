@@ -1179,6 +1179,48 @@ app.get("/api/bmkg/maritime/port/:id", async (req, res) => {
   }
 });
 
+// 9. Laporan Kejadian Bencana Masyarakat
+app.get("/api/siaga/lapor", async (_req, res) => {
+  try {
+    // using direct node fetch to bypass any issues, but fetchBMKG is fine
+    const raw = await fetchBMKG("https://siaga.ntbprov.go.id/api/lapor/lists", 6000);
+    const $ = cheerio.load(raw);
+    const reports: any[] = [];
+    
+    $("div.d-flex.flex-stack").each((i, el) => {
+        const time = $(el).find(".fs-5").first().text().trim();
+        const title = $(el).find("a.text-hover-primary").text().trim();
+        const user = $(el).find(".text-gray-400 a").text().trim();
+        const onClickAttr = $(el).find("a.text-hover-primary").attr("onclick");
+        let id = null;
+        if (onClickAttr) {
+            const match = onClickAttr.match(/'(\d+)'/);
+            if (match) id = match[1];
+        }
+        if (title) {
+            reports.push({ id, time, title, user });
+        }
+    });
+
+    res.json(reports);
+  } catch (error: any) {
+    console.warn("Siaga Lapor fetch failed:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 10. Kejadian Bencana 30 Hari Terakhir
+app.get("/api/siaga/latest30days", async (_req, res) => {
+  try {
+    const raw = await fetchBMKG("https://siaga.ntbprov.go.id/api/kejadian-bencana/latest30days", 6000);
+    const json = JSON.parse(raw);
+    res.json(json);
+  } catch (error: any) {
+    console.warn("Siaga 30 Days fetch failed:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Vite Middleware Integration for Development / Production
 async function setupVite() {
   if (process.env.NODE_ENV === "production") {
