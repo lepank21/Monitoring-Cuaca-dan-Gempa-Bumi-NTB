@@ -22,7 +22,6 @@ interface DisasterMapProps {
   weatherRegencies: WeatherRegency[];
   volcanoes: VolcanoInfo[];
   districts: DistrictInfo[];
-  bencana30Days?: any;
   selectedQuake: EarthquakeItem | null;
   onSelectQuake: (quake: EarthquakeItem | null) => void;
   selectedRegency: WeatherRegency | null;
@@ -78,7 +77,6 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
   weatherRegencies,
   volcanoes,
   districts,
-  bencana30Days,
   selectedQuake,
   onSelectQuake,
   selectedRegency,
@@ -95,7 +93,6 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
   const geologyLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const districtLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const portLayerGroupRef = useRef<L.LayerGroup | null>(null);
-  const bencanaLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
   // States: OpenStreetMap Standar by default
   const [activeTile, setActiveTile] = useState<keyof typeof TILE_LAYERS>("osm");
@@ -105,7 +102,6 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
   const [showGeology, setShowGeology] = useState(true);
   const [showDistricts, setShowDistricts] = useState(false);
   const [showPorts, setShowPorts] = useState(true);
-  const [showBencana, setShowBencana] = useState(true);
   const [showLayersDropdown, setShowLayersDropdown] = useState(false);
   const [showLegend, setShowLegend] = useState(false);
   const [ntbPorts, setNtbPorts] = useState<any[]>([]);
@@ -153,7 +149,6 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
     geologyLayerGroupRef.current = L.layerGroup().addTo(map);
     districtLayerGroupRef.current = L.layerGroup().addTo(map);
     portLayerGroupRef.current = L.layerGroup().addTo(map);
-    bencanaLayerGroupRef.current = L.layerGroup().addTo(map);
 
     mapInstanceRef.current = map;
 
@@ -715,75 +710,6 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
     });
   }, [showQuakes, autoGempa, recentQuakes, selectedQuake, onSelectQuake]);
 
-  // Bencana 30 Hari Terakhir Layer
-  useEffect(() => {
-    if (!bencanaLayerGroupRef.current) return;
-    bencanaLayerGroupRef.current.clearLayers();
-
-    if (!showBencana || !bencana30Days || !bencana30Days.features) return;
-
-    bencana30Days.features.forEach((feature: any) => {
-      const { geometry, properties } = feature;
-      if (geometry && geometry.type === "Point" && geometry.coordinates) {
-        const [lng, lat] = geometry.coordinates;
-        
-        let iconHtml = "🔴";
-        let colorClass = "bg-red-500 text-white border-white";
-        const jenisLower = properties.jenis ? properties.jenis.toLowerCase() : "";
-        if (jenisLower.includes("kekeringan")) {
-          iconHtml = "☀️";
-          colorClass = "bg-amber-500 text-slate-900 border-white";
-        } else if (jenisLower.includes("banjir")) {
-          iconHtml = "🌊";
-          colorClass = "bg-blue-500 text-white border-white";
-        } else if (jenisLower.includes("longsor")) {
-          iconHtml = "⛰️";
-          colorClass = "bg-amber-800 text-white border-white";
-        } else if (jenisLower.includes("angin")) {
-          iconHtml = "💨";
-          colorClass = "bg-teal-500 text-white border-white";
-        } else if (jenisLower.includes("gempa")) {
-          iconHtml = "💥";
-          colorClass = "bg-rose-600 text-white border-white";
-        } else if (jenisLower.includes("kebakaran")) {
-          iconHtml = "🔥";
-          colorClass = "bg-orange-600 text-white border-white";
-        }
-
-        const bencanaDiv = L.divIcon({
-          className: "custom-bencana-marker",
-          html: `
-            <div class="flex items-center justify-center -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
-              <div class="w-8 h-8 rounded-full ${colorClass} border-2 flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
-                <span class="text-sm font-bold">${iconHtml}</span>
-              </div>
-            </div>
-          `,
-          iconSize: [32, 32],
-        });
-
-        const marker = L.marker([lat, lng], { icon: bencanaDiv });
-
-        const popupContent = `
-          <div class="p-3 text-slate-100 min-w-[240px]">
-            <div class="flex items-center justify-between mb-1.5 border-b border-slate-700 pb-1">
-              <h4 class="font-bold text-sm text-rose-400">${properties.jenis || 'Kejadian Bencana'}</h4>
-              <span class="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-300">${properties.tanggalBencana || '-'}</span>
-            </div>
-            <div class="text-xs space-y-1">
-              <p><span class="text-slate-400">Lokasi:</span> <span class="font-medium">${properties.desa || '-'}</span></p>
-              ${properties.cakupan ? `<p><span class="text-slate-400">Cakupan:</span> ${properties.cakupan}</p>` : ''}
-              ${properties.pendudukTerdampak ? `<p><span class="text-slate-400">Terdampak:</span> ${properties.pendudukTerdampak}</p>` : ''}
-            </div>
-          </div>
-        `;
-
-        marker.bindPopup(popupContent);
-        bencanaLayerGroupRef.current?.addLayer(marker);
-      }
-    });
-  }, [showBencana, bencana30Days]);
-
   // Fly to selected quake or regency when user selects from list
   useEffect(() => {
     if (!mapInstanceRef.current) return;
@@ -963,19 +889,6 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
                       type="checkbox"
                       checked={showVolcanoes}
                       onChange={(e) => setShowVolcanoes(e.target.checked)}
-                      className="rounded accent-sky-500"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/60 cursor-pointer">
-                    <span className="flex items-center gap-2 text-slate-200">
-                      <span className="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
-                      Kejadian Bencana (30 Hari Terakhir)
-                    </span>
-                    <input
-                      type="checkbox"
-                      checked={showBencana}
-                      onChange={(e) => setShowBencana(e.target.checked)}
                       className="rounded accent-sky-500"
                     />
                   </label>

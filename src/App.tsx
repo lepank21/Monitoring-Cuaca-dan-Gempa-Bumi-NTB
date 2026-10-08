@@ -46,7 +46,6 @@ export default function App() {
   const [districts, setDistricts] = useState<DistrictInfo[]>([]);
   const [volcanoes, setVolcanoes] = useState<VolcanoInfo[]>([]);
   const [marineWarning, setMarineWarning] = useState<any>(null);
-  const [bencana30Days, setBencana30Days] = useState<any | null>(null);
 
   // Selection states for map interaction
   const [selectedQuake, setSelectedQuake] = useState<EarthquakeItem | null>(
@@ -88,7 +87,7 @@ export default function App() {
       setIsRefreshing(true);
       try {
         // Parallel fetches to our server proxy
-        const [autoRes, recentRes, feltRes, weatherRes, nowcastRes, marineRes, laporRes, bencanaRes] =
+        const [autoRes, recentRes, feltRes, weatherRes, nowcastRes, marineRes, laporRes] =
           await Promise.all([
             fetch("/api/bmkg/gempabumi/autogempa").then((r) => r.json()),
             fetch("/api/bmkg/gempabumi/gempaterkini").then((r) => r.json()),
@@ -99,9 +98,6 @@ export default function App() {
               .then((r) => (r.ok ? r.json() : null))
               .catch(() => null),
             fetch("/api/siaga/lapor")
-              .then((r) => (r.ok ? r.json() : null))
-              .catch(() => null),
-            fetch("/api/siaga/latest30days")
               .then((r) => (r.ok ? r.json() : null))
               .catch(() => null),
           ]);
@@ -117,9 +113,6 @@ export default function App() {
         setFeltQuakes(feltList);
         setWeatherRegencies(regencyList);
         setNowcasting(nowcastRes);
-        if (bencanaRes?.data) {
-          setBencana30Days(bencanaRes.data);
-        }
 
         if (marineRes && marineRes.NTB && marineRes.NTB.data) {
           setMarineWarning(marineRes.NTB.data);
@@ -309,7 +302,6 @@ export default function App() {
               weatherRegencies={weatherRegencies}
               volcanoes={volcanoes}
               districts={districts}
-              bencana30Days={bencana30Days}
               selectedQuake={selectedQuake}
               onSelectQuake={(q) => setSelectedQuake(q)}
               selectedRegency={selectedRegency}
@@ -349,7 +341,6 @@ export default function App() {
                 weatherRegencies={weatherRegencies}
                 volcanoes={volcanoes}
                 districts={districts}
-                bencana30Days={bencana30Days}
                 selectedQuake={selectedQuake}
                 onSelectQuake={(q) => setSelectedQuake(q)}
                 selectedRegency={selectedRegency}
