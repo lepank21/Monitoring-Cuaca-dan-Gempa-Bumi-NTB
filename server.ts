@@ -123,6 +123,16 @@ export const NTB_DISTRICTS = [
     pmiPhone: "(0374) 42118",
     riskLevel: "Tinggi (Banjir Luapan Sungai Padolo, Gempa Bumi)",
   },
+  {
+    id: "mandalika",
+    name: "Mandalika Lombok",
+    island: "Lombok",
+    lat: -8.8950,
+    lng: 116.2900,
+    bpbdPhone: "(0370) 654321",
+    pmiPhone: "(0370) 653118",
+    riskLevel: "Tinggi (Tsunami Selatan, Gempa Bumi Megathrust)",
+  },
 ];
 
 export const NTB_VOLCANOES = [

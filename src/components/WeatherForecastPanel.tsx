@@ -51,7 +51,7 @@ export const WeatherForecastPanel: React.FC<WeatherForecastPanelProps> = ({
           <div className="flex items-center gap-2 mb-1">
             <Cloud className="w-5 h-5 text-sky-400" />
             <h2 className="text-base font-bold text-white tracking-tight">
-              Prakiraan Cuaca 10 Kabupaten / Kota NTB
+              Prakiraan Cuaca 11 Wilayah / Kota NTB
             </h2>
           </div>
           <p className="text-xs text-slate-400">
@@ -69,7 +69,7 @@ export const WeatherForecastPanel: React.FC<WeatherForecastPanelProps> = ({
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            Semua (10)
+            Semua (11)
           </button>
           <button
             onClick={() => setIslandFilter('lombok')}
