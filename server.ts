@@ -1246,7 +1246,7 @@ app.get("/api/siaga/kejadian-bencana", async (_req, res) => {
 // Vite Middleware Integration for Development / Production
 async function setupVite() {
   if (process.env.NODE_ENV === "production") {
-    // Serve static build in production
+    // Serve static build in production (local only; on Vercel, static files are served by CDN)
     app.use(express.static(path.resolve(__dirname, "dist")));
     app.get("*", (_req, res) => {
       res.sendFile(path.resolve(__dirname, "dist", "index.html"));
@@ -1266,8 +1266,20 @@ async function setupVite() {
   });
 }
 
+// Export app for Vercel serverless handler
 export default app;
-setupVite().catch((err) => {
-  console.error("Failed to start server:", err);
-  process.exit(1);
-});
+
+// Only start the server when this file is run directly (not when imported by Vercel)
+// ESM: compare import.meta.url with the entry-point path
+const isMainModule =
+  typeof process !== "undefined" &&
+  process.argv[1] &&
+  fileURLToPath(import.meta.url).replace(/\\/g, "/") ===
+    process.argv[1].replace(/\\/g, "/");
+
+if (isMainModule) {
+  setupVite().catch((err) => {
+    console.error("Failed to start server:", err);
+    process.exit(1);
+  });
+}

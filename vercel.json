@@ -1,21 +1,15 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "server.ts",
-      "use": "@vercel/node",
-      "config": {
-        "functions": {
-          "api/**/*.ts": {
-            "runtime": "nodejs18.x"
-          }
-        }
-      }
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": null,
+  "functions": {
+    "server.ts": {
+      "runtime": "@vercel/node",
+      "memory": 1024
     }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/server.ts" },
-    { "src": "/(.*)", "dest": "/dist/$1" }
+  },
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/server.ts" }
   ]
 }
-
