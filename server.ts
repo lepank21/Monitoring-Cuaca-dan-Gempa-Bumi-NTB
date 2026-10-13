@@ -12,6 +12,25 @@ const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
+// Enable CORS
+app.use((_req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  next();
+});
+
+// URL normalization for Vercel: ensure req.url retains the /api prefix
+app.use((req, _res, next) => {
+  const matched = req.headers["x-matched-path"] as string;
+  if (matched && matched.startsWith("/api")) {
+    req.url = matched;
+  } else if (!req.url.startsWith("/api")) {
+    req.url = "/api" + (req.url.startsWith("/") ? req.url : "/" + req.url);
+  }
+  next();
+});
+
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: "@_",
@@ -1269,15 +1288,16 @@ async function setupVite() {
 // Export app for Vercel serverless handler
 export default app;
 
-// Only start the server when this file is run directly (not when imported by Vercel)
+// Only start the server when this file is run directly (not on Vercel or when imported)
 // ESM: compare import.meta.url with the entry-point path
+const isVercel = Boolean(process.env.VERCEL);
 const isMainModule =
   typeof process !== "undefined" &&
   process.argv[1] &&
   fileURLToPath(import.meta.url).replace(/\\/g, "/") ===
     process.argv[1].replace(/\\/g, "/");
 
-if (isMainModule) {
+if (!isVercel && isMainModule) {
   setupVite().catch((err) => {
     console.error("Failed to start server:", err);
     process.exit(1);
