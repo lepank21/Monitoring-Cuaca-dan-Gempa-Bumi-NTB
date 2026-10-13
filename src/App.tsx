@@ -95,37 +95,51 @@ export default function App() {
     async (isInitial = false) => {
       setIsRefreshing(true);
       try {
-        // Parallel fetches to our server proxy
+        // Helper: fetch with individual error handling so one failing API
+        // doesn't prevent the others from updating state.
+        const safeFetch = async (url: string, label: string) => {
+          try {
+            const r = await fetch(url);
+            if (!r.ok) {
+              console.warn(`[${label}] HTTP ${r.status}`);
+              return null;
+            }
+            return await r.json();
+          } catch (err) {
+            console.warn(`[${label}] Fetch failed:`, err);
+            return null;
+          }
+        };
+
+        // Parallel fetches to our server proxy — each one is independent
         const [autoRes, recentRes, feltRes, weatherRes, nowcastRes, marineRes, laporRes] =
           await Promise.all([
-            fetch("/api/bmkg/gempabumi/autogempa").then((r) => r.json()),
-            fetch("/api/bmkg/gempabumi/gempaterkini").then((r) => r.json()),
-            fetch("/api/bmkg/gempabumi/gempadirasakan").then((r) => r.json()),
-            fetch("/api/bmkg/cuaca/ntb").then((r) => r.json()),
-            fetch("/api/bmkg/nowcasting/ntb").then((r) => r.json()),
-            fetch("/api/bmkg/maritime/warning")
-              .then((r) => (r.ok ? r.json() : null))
-              .catch(() => null),
-            fetch("/api/siaga/lapor")
-              .then((r) => (r.ok ? r.json() : null))
-              .catch(() => null),
+            safeFetch("/api/bmkg/gempabumi/autogempa", "AutoGempa"),
+            safeFetch("/api/bmkg/gempabumi/gempaterkini", "GempaTerkini"),
+            safeFetch("/api/bmkg/gempabumi/gempadirasakan", "GempaDirasakan"),
+            safeFetch("/api/bmkg/cuaca/ntb", "CuacaNTB"),
+            safeFetch("/api/bmkg/nowcasting/ntb", "NowcastingNTB"),
+            safeFetch("/api/bmkg/maritime/warning", "MaritimeWarning"),
+            safeFetch("/api/siaga/lapor", "LaporSiaga"),
           ]);
 
+        // Only update state when the API actually returned data.
+        // This preserves previously valid data if an individual endpoint fails.
         const currentAuto: EarthquakeItem | null =
           autoRes?.Infogempa?.gempa || null;
         const recentList: EarthquakeItem[] = recentRes?.Infogempa?.gempa || [];
         const feltList: EarthquakeItem[] = feltRes?.Infogempa?.gempa || [];
         const regencyList: WeatherRegency[] = weatherRes?.regencies || [];
 
-        setAutoGempa(currentAuto);
-        setRecentQuakes(recentList);
-        setFeltQuakes(feltList);
-        setWeatherRegencies(regencyList);
-        setNowcasting(nowcastRes);
+        if (autoRes) setAutoGempa(currentAuto);
+        if (recentRes) setRecentQuakes(recentList);
+        if (feltRes) setFeltQuakes(feltList);
+        if (weatherRes) setWeatherRegencies(regencyList);
+        if (nowcastRes) setNowcasting(nowcastRes);
 
         if (marineRes && marineRes.NTB && marineRes.NTB.data) {
           setMarineWarning(marineRes.NTB.data);
-        } else {
+        } else if (marineRes) {
           setMarineWarning(null);
         }
 
