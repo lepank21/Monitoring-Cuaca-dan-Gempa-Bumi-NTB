@@ -12,11 +12,17 @@ const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
-// Enable CORS
+// Enable CORS and disable caching for real-time disaster and weather monitoring
 app.use((_req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+  );
+  res.header("Pragma", "no-cache");
+  res.header("Expires", "0");
   next();
 });
 
@@ -1255,6 +1261,9 @@ app.get("/api/siaga/kejadian-bencana", async (_req, res) => {
   try {
     const raw = await fetchBMKG("https://siaga.ntbprov.go.id/api/mobile/kejadian-bencana/", 8000);
     const json = JSON.parse(raw);
+    if (json && Array.isArray(json.data)) {
+      json.data.sort((a: any, b: any) => Number(b.id || 0) - Number(a.id || 0));
+    }
     res.json(json);
   } catch (error: any) {
     console.warn("Kejadian Bencana fetch failed:", error.message);

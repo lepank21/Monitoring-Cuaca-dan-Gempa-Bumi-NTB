@@ -69,6 +69,10 @@
   100% { transform: translateX(-50%); }
 }
 
+.marquee-container:hover .marquee-track {
+  animation-play-state: paused;
+}
+
 /* Custom Scrollbar for Alert Panels */
 ::-webkit-scrollbar {
   width: 6px;
