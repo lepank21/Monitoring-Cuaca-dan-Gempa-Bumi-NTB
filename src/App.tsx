@@ -22,6 +22,7 @@ import {
   NowcastingAlert,
   DistrictInfo,
   VolcanoInfo,
+  RainfallLocation,
 } from "./types/bmkg";
 import { soundAlert } from "./utils/audioAlert";
 import {
@@ -44,6 +45,7 @@ export default function App() {
     [],
   );
   const [nowcasting, setNowcasting] = useState<NowcastingAlert | null>(null);
+  const [rainfallLocations, setRainfallLocations] = useState<RainfallLocation[]>([]);
   const [districts, setDistricts] = useState<DistrictInfo[]>([]);
   const [volcanoes, setVolcanoes] = useState<VolcanoInfo[]>([]);
   const [marineWarning, setMarineWarning] = useState<any>(null);
@@ -112,7 +114,7 @@ export default function App() {
         };
 
         // Parallel fetches to our server proxy — each one is independent
-        const [autoRes, recentRes, feltRes, weatherRes, nowcastRes, marineRes, laporRes] =
+        const [autoRes, recentRes, feltRes, weatherRes, nowcastRes, marineRes, laporRes, rainfallRes] =
           await Promise.all([
             safeFetch("/api/bmkg/gempabumi/autogempa", "AutoGempa"),
             safeFetch("/api/bmkg/gempabumi/gempaterkini", "GempaTerkini"),
@@ -121,6 +123,7 @@ export default function App() {
             safeFetch("/api/bmkg/nowcasting/ntb", "NowcastingNTB"),
             safeFetch("/api/bmkg/maritime/warning", "MaritimeWarning"),
             safeFetch("/api/siaga/lapor", "LaporSiaga"),
+            safeFetch("/api/bmkg/curah-hujan", "CurahHujan"),
           ]);
 
         // Only update state when the API actually returned data.
@@ -136,6 +139,10 @@ export default function App() {
         if (feltRes) setFeltQuakes(feltList);
         if (weatherRes) setWeatherRegencies(regencyList);
         if (nowcastRes) setNowcasting(nowcastRes);
+
+        if (rainfallRes && Array.isArray(rainfallRes.locations)) {
+          setRainfallLocations(rainfallRes.locations);
+        }
 
         if (marineRes && marineRes.NTB && marineRes.NTB.data) {
           setMarineWarning(marineRes.NTB.data);
@@ -325,6 +332,7 @@ export default function App() {
               weatherRegencies={weatherRegencies}
               volcanoes={volcanoes}
               districts={districts}
+              rainfallLocations={rainfallLocations}
               selectedQuake={selectedQuake}
               onSelectQuake={(q) => setSelectedQuake(q)}
               selectedRegency={selectedRegency}
@@ -364,6 +372,7 @@ export default function App() {
                 weatherRegencies={weatherRegencies}
                 volcanoes={volcanoes}
                 districts={districts}
+                rainfallLocations={rainfallLocations}
                 selectedQuake={selectedQuake}
                 onSelectQuake={(q) => setSelectedQuake(q)}
                 selectedRegency={selectedRegency}

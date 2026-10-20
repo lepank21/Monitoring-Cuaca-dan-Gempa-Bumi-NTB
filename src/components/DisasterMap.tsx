@@ -5,6 +5,7 @@ import {
   WeatherRegency,
   VolcanoInfo,
   DistrictInfo,
+  RainfallLocation,
 } from "../types/bmkg";
 import {
   Layers,
@@ -14,6 +15,8 @@ import {
   ShieldAlert,
   Mountain,
   CloudLightning,
+  CloudRain,
+  Droplets,
 } from "lucide-react";
 
 interface DisasterMapProps {
@@ -22,6 +25,7 @@ interface DisasterMapProps {
   weatherRegencies: WeatherRegency[];
   volcanoes: VolcanoInfo[];
   districts: DistrictInfo[];
+  rainfallLocations?: RainfallLocation[];
   selectedQuake: EarthquakeItem | null;
   onSelectQuake: (quake: EarthquakeItem | null) => void;
   selectedRegency: WeatherRegency | null;
@@ -77,6 +81,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
   weatherRegencies,
   volcanoes,
   districts,
+  rainfallLocations = [],
   selectedQuake,
   onSelectQuake,
   selectedRegency,
@@ -89,6 +94,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
   // Layer Groups
   const quakeLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const weatherLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const rainfallLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const volcanoLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const geologyLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const districtLayerGroupRef = useRef<L.LayerGroup | null>(null);
@@ -98,6 +104,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
   const [activeTile, setActiveTile] = useState<keyof typeof TILE_LAYERS>("osm");
   const [showQuakes, setShowQuakes] = useState(true);
   const [showWeather, setShowWeather] = useState(true);
+  const [showRainfall, setShowRainfall] = useState(true);
   const [showVolcanoes, setShowVolcanoes] = useState(true);
   const [showGeology, setShowGeology] = useState(true);
   const [showDistricts, setShowDistricts] = useState(false);
@@ -145,6 +152,7 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
     // Initialize Layer Groups
     quakeLayerGroupRef.current = L.layerGroup().addTo(map);
     weatherLayerGroupRef.current = L.layerGroup().addTo(map);
+    rainfallLayerGroupRef.current = L.layerGroup().addTo(map);
     volcanoLayerGroupRef.current = L.layerGroup().addTo(map);
     geologyLayerGroupRef.current = L.layerGroup().addTo(map);
     districtLayerGroupRef.current = L.layerGroup().addTo(map);
@@ -547,6 +555,131 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
     });
   }, [showWeather, weatherRegencies, selectedRegency, onSelectRegency]);
 
+  // Curah Hujan & Peringatan Nowcasting Layer (Open-Meteo)
+  useEffect(() => {
+    if (!rainfallLayerGroupRef.current) return;
+    rainfallLayerGroupRef.current.clearLayers();
+
+    if (!showRainfall || !rainfallLocations || rainfallLocations.length === 0) return;
+
+    rainfallLocations.forEach((loc) => {
+      const hasRain = loc.precipitationMm > 0;
+      const isAlert = loc.isNowcastAlertArea;
+
+      let badgeBg = "bg-slate-900/90 text-cyan-300 border-cyan-500/60";
+      let pulseRing = "";
+
+      if (loc.precipitationMm > 20.0) {
+        badgeBg = "bg-red-950/95 text-red-200 border-red-500";
+        pulseRing = "quake-pulse-ring bg-red-600/40";
+      } else if (loc.precipitationMm > 10.0) {
+        badgeBg = "bg-orange-950/95 text-orange-200 border-orange-500";
+        pulseRing = "quake-pulse-ring bg-orange-600/40";
+      } else if (loc.precipitationMm > 5.0) {
+        badgeBg = "bg-amber-950/95 text-yellow-200 border-amber-500";
+      } else if (hasRain) {
+        badgeBg = "bg-sky-950/90 text-sky-200 border-sky-400";
+      } else if (isAlert) {
+        badgeBg = "bg-amber-950/90 text-amber-300 border-amber-500";
+        pulseRing = "quake-pulse-ring bg-amber-500/30";
+      }
+
+      const rainDiv = L.divIcon({
+        className: "custom-rainfall-marker",
+        html: `
+          <div class="relative flex flex-col items-center -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
+            ${
+              pulseRing
+                ? `<div class="absolute w-10 h-10 rounded-full ${pulseRing} pointer-events-none"></div>`
+                : ""
+            }
+            <div class="px-2 py-1 rounded-md text-[11px] font-semibold flex items-center gap-1 shadow-lg border ${badgeBg} backdrop-blur-sm transition-transform group-hover:scale-110">
+              <span class="text-xs">${
+                loc.precipitationMm > 10
+                  ? "⛈️"
+                  : hasRain
+                  ? "🌧️"
+                  : isAlert
+                  ? "⚠️"
+                  : "💧"
+              }</span>
+              <span class="font-mono font-bold">${loc.precipitationMm.toFixed(1)}</span>
+              <span class="text-[9px] text-slate-300 font-normal">mm</span>
+              ${
+                isAlert
+                  ? `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span>`
+                  : ""
+              }
+            </div>
+            <span class="text-[9px] font-medium text-slate-300 bg-slate-950/80 px-1 rounded mt-0.5 whitespace-nowrap opacity-90 group-hover:opacity-100">
+              ${loc.name}
+            </span>
+          </div>
+        `,
+        iconSize: [60, 36],
+      });
+
+      const marker = L.marker([loc.lat, loc.lng], { icon: rainDiv });
+
+      const popupContent = `
+        <div class="p-3 text-slate-100 min-w-[240px]">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h4 class="font-bold text-sm text-cyan-400">${loc.name}</h4>
+              <span class="text-[10px] text-slate-400">${loc.district}</span>
+            </div>
+            ${
+              loc.isNowcastAlertArea
+                ? `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/50 text-[10px] font-bold px-1.5 py-0.5 rounded animate-pulse">SIAGA NOWCASTING</span>`
+                : `<span class="bg-slate-800 text-slate-300 text-[10px] px-1.5 py-0.5 rounded">Open-Meteo</span>`
+            }
+          </div>
+
+          <div class="bg-slate-800/80 p-2 rounded text-xs space-y-1.5 border border-slate-700/60 mb-2">
+            <div class="flex justify-between items-center">
+              <span class="text-slate-400">Curah Hujan Saat Ini:</span>
+              <span class="font-mono text-sm font-bold" style="color: ${loc.intensityColor}">
+                ${loc.precipitationMm} mm/jam
+              </span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-400">Kategori Intensitas:</span>
+              <span class="font-semibold text-xs text-slate-200">${loc.intensity}</span>
+            </div>
+            <div class="flex justify-between items-center">
+              <span class="text-slate-400">Total Hujan Hari Ini:</span>
+              <span class="font-mono text-slate-300">${loc.dailyPrecipitationSumMm} mm</span>
+            </div>
+            <div class="flex justify-between items-center pt-1 border-t border-slate-700/60 text-[11px]">
+              <span class="text-slate-400">Kondisi Cuaca:</span>
+              <span class="text-amber-300 font-medium">${loc.weatherDesc}</span>
+            </div>
+            <div class="flex justify-between items-center text-[11px]">
+              <span class="text-slate-400">Suhu & Kelembapan:</span>
+              <span class="font-mono text-slate-200">${loc.temperatureC}°C · ${loc.humidityPercent}%</span>
+            </div>
+          </div>
+
+          ${
+            loc.isNowcastAlertArea && loc.warningTitle
+              ? `
+            <div class="p-2 bg-amber-950/40 border border-amber-500/40 rounded text-[11px] text-amber-200 space-y-1">
+              <div class="font-bold flex items-center gap-1 text-[10px] uppercase text-amber-400">
+                <span>⚠️ Peringatan Dini BMKG:</span>
+              </div>
+              <p class="leading-relaxed text-[10px] text-slate-300">${loc.warningTitle}</p>
+            </div>
+          `
+              : ""
+          }
+        </div>
+      `;
+
+      marker.bindPopup(popupContent);
+      rainfallLayerGroupRef.current?.addLayer(marker);
+    });
+  }, [showRainfall, rainfallLocations]);
+
   // Earthquakes Layer (Autogempa + Recent Quakes)
   useEffect(() => {
     if (!quakeLayerGroupRef.current) return;
@@ -869,6 +1002,19 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
                   <label className="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/60 cursor-pointer">
                     <span className="flex items-center gap-2 text-slate-200">
+                      <span className="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+                      Curah Hujan & Nowcasting (Open-Meteo)
+                    </span>
+                    <input
+                      type="checkbox"
+                      checked={showRainfall}
+                      onChange={(e) => setShowRainfall(e.target.checked)}
+                      className="rounded accent-sky-500"
+                    />
+                  </label>
+
+                  <label className="flex items-center justify-between p-1.5 rounded hover:bg-slate-800/60 cursor-pointer">
+                    <span className="flex items-center gap-2 text-slate-200">
                       <span className="w-2.5 h-2.5 rounded-full bg-sky-400"></span>
                       Prakiraan Cuaca 10 Kab/Kota
                     </span>
@@ -976,6 +1122,14 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
               <div className="flex items-center gap-1.5">
                 <span className="w-2.5 h-2.5 rounded-sm bg-sky-600 inline-block"></span>
                 <span>Cuaca Kab/Kota</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-cyan-400 inline-block"></span>
+                <span>Curah Hujan (mm)</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-sm bg-amber-400 inline-block animate-pulse"></span>
+                <span>Nowcasting BMKG</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-4 h-4 flex items-center justify-center bg-indigo-900 rounded-full border border-indigo-400 text-[8px]">
