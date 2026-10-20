@@ -226,7 +226,6 @@ const cache: {
   gempadirasakan?: CacheEntry<any>;
   cuacaNtb?: CacheEntry<any>;
   nowcastingNtb?: CacheEntry<any>;
-  curahHujan?: CacheEntry<any>;
 } = {};
 
 const CACHE_TTL_MS = 45 * 1000; // 45 seconds
@@ -834,467 +833,331 @@ app.get("/api/bmkg/cuaca/ntb", async (_req, res) => {
   }
 });
 
-// Comprehensive NTB Kecamatan Coordinates Reference for Open-Meteo & Nowcasting
-const NTB_KECAMATAN_MAP: Record<string, { name: string; district: string; lat: number; lng: number }> = {
-  // Kota Mataram
-  "ampenan": { name: "Ampenan", district: "Kota Mataram", lat: -8.5700, lng: 116.0800 },
-  "cakranegara": { name: "Cakranegara", district: "Kota Mataram", lat: -8.5900, lng: 116.1400 },
-  "sandubaya": { name: "Sandubaya", district: "Kota Mataram", lat: -8.6000, lng: 116.1500 },
-  "selaparang": { name: "Selaparang", district: "Kota Mataram", lat: -8.5700, lng: 116.1100 },
-  "sekarbela": { name: "Sekarbela", district: "Kota Mataram", lat: -8.6000, lng: 116.0900 },
-  "mataram": { name: "Kota Mataram", district: "Kota Mataram", lat: -8.5833, lng: 116.1167 },
-
-  // Lombok Barat
-  "batulayar": { name: "Batu Layar", district: "Kab. Lombok Barat", lat: -8.4900, lng: 116.0800 },
-  "batu layar": { name: "Batu Layar", district: "Kab. Lombok Barat", lat: -8.4900, lng: 116.0800 },
-  "gunungsari": { name: "Gunungsari", district: "Kab. Lombok Barat", lat: -8.5200, lng: 116.1000 },
-  "gunung sari": { name: "Gunungsari", district: "Kab. Lombok Barat", lat: -8.5200, lng: 116.1000 },
-  "lingsar": { name: "Lingsar", district: "Kab. Lombok Barat", lat: -8.5600, lng: 116.1700 },
-  "narmada": { name: "Narmada", district: "Kab. Lombok Barat", lat: -8.5900, lng: 116.2000 },
-  "kediri": { name: "Kediri", district: "Kab. Lombok Barat", lat: -8.6400, lng: 116.1600 },
-  "labuapi": { name: "Labuapi", district: "Kab. Lombok Barat", lat: -8.6300, lng: 116.1200 },
-  "labu api": { name: "Labuapi", district: "Kab. Lombok Barat", lat: -8.6300, lng: 116.1200 },
-  "gerung": { name: "Gerung", district: "Kab. Lombok Barat", lat: -8.6800, lng: 116.1300 },
-  "sekotong": { name: "Sekotong", district: "Kab. Lombok Barat", lat: -8.7600, lng: 115.9800 },
-  "lembar": { name: "Lembar", district: "Kab. Lombok Barat", lat: -8.7200, lng: 116.0800 },
-  "kuripan": { name: "Kuripan", district: "Kab. Lombok Barat", lat: -8.6800, lng: 116.1800 },
-
-  // Lombok Utara
-  "pemenang": { name: "Pemenang", district: "Kab. Lombok Utara", lat: -8.4000, lng: 116.1000 },
-  "tanjung": { name: "Tanjung", district: "Kab. Lombok Utara", lat: -8.3500, lng: 116.1500 },
-  "gangga": { name: "Gangga", district: "Kab. Lombok Utara", lat: -8.3300, lng: 116.2000 },
-  "kayangan": { name: "Kayangan", district: "Kab. Lombok Utara", lat: -8.2700, lng: 116.2600 },
-  "bayan": { name: "Bayan", district: "Kab. Lombok Utara", lat: -8.2500, lng: 116.4200 },
-
-  // Lombok Tengah
-  "praya": { name: "Praya", district: "Kab. Lombok Tengah", lat: -8.7000, lng: 116.2700 },
-  "jonggat": { name: "Jonggat", district: "Kab. Lombok Tengah", lat: -8.6500, lng: 116.2300 },
-  "pujut": { name: "Pujut", district: "Kab. Lombok Tengah", lat: -8.8200, lng: 116.2800 },
-  "mandalika": { name: "Mandalika", district: "Kab. Lombok Tengah", lat: -8.8950, lng: 116.2900 },
-  "kuta": { name: "Kuta Mandalika", district: "Kab. Lombok Tengah", lat: -8.8950, lng: 116.2900 },
-  "batukliang": { name: "Batukliang", district: "Kab. Lombok Tengah", lat: -8.6000, lng: 116.2600 },
-  "kopang": { name: "Kopang", district: "Kab. Lombok Tengah", lat: -8.6300, lng: 116.3500 },
-  "janapria": { name: "Janapria", district: "Kab. Lombok Tengah", lat: -8.6800, lng: 116.3800 },
-
-  // Lombok Timur
-  "sembalun": { name: "Sembalun", district: "Kab. Lombok Timur", lat: -8.3600, lng: 116.5200 },
-  "pringgabaya": { name: "Pringgabaya", district: "Kab. Lombok Timur", lat: -8.5500, lng: 116.6300 },
-  "sambelia": { name: "Sambelia", district: "Kab. Lombok Timur", lat: -8.3500, lng: 116.6800 },
-  "labuhan haji": { name: "Labuhan Haji", district: "Kab. Lombok Timur", lat: -8.6800, lng: 116.5700 },
-  "selong": { name: "Selong", district: "Kab. Lombok Timur", lat: -8.6500, lng: 116.5300 },
-  "aikmel": { name: "Aikmel", district: "Kab. Lombok Timur", lat: -8.5700, lng: 116.5200 },
-  "masbagik": { name: "Masbagik", district: "Kab. Lombok Timur", lat: -8.6200, lng: 116.4800 },
-  "sukamulia": { name: "Sukamulia", district: "Kab. Lombok Timur", lat: -8.6400, lng: 116.5200 },
-  "suralaga": { name: "Suralaga", district: "Kab. Lombok Timur", lat: -8.6000, lng: 116.5500 },
-  "terara": { name: "Terara", district: "Kab. Lombok Timur", lat: -8.6300, lng: 116.4200 },
-  "sakra": { name: "Sakra", district: "Kab. Lombok Timur", lat: -8.6800, lng: 116.4800 },
-  "keruak": { name: "Keruak", district: "Kab. Lombok Timur", lat: -8.7500, lng: 116.5000 },
-  "jerowaru": { name: "Jerowaru", district: "Kab. Lombok Timur", lat: -8.8400, lng: 116.4700 },
-
-  // Sumbawa Barat
-  "taliwang": { name: "Taliwang", district: "Kab. Sumbawa Barat", lat: -8.7500, lng: 116.8500 },
-  "brang ene": { name: "Brang Ene", district: "Kab. Sumbawa Barat", lat: -8.8000, lng: 116.8800 },
-  "brang rea": { name: "Brang Rea", district: "Kab. Sumbawa Barat", lat: -8.6800, lng: 116.8900 },
-  "jereweh": { name: "Jereweh", district: "Kab. Sumbawa Barat", lat: -8.8200, lng: 116.8100 },
-  "maluk": { name: "Maluk", district: "Kab. Sumbawa Barat", lat: -8.9200, lng: 116.7600 },
-  "sekongkang": { name: "Sekongkang", district: "Kab. Sumbawa Barat", lat: -8.9800, lng: 116.7300 },
-  "seteluk": { name: "Seteluk", district: "Kab. Sumbawa Barat", lat: -8.6500, lng: 116.8500 },
-  "poto tano": { name: "Poto Tano", district: "Kab. Sumbawa Barat", lat: -8.5300, lng: 116.8200 },
-
-  // Sumbawa
-  "sumbawa": { name: "Sumbawa Besar", district: "Kab. Sumbawa", lat: -8.5000, lng: 117.4333 },
-  "alas": { name: "Alas", district: "Kab. Sumbawa", lat: -8.5300, lng: 117.0000 },
-  "alas barat": { name: "Alas Barat", district: "Kab. Sumbawa", lat: -8.5200, lng: 116.9200 },
-  "buer": { name: "Buer", district: "Kab. Sumbawa", lat: -8.5200, lng: 117.0800 },
-  "utan": { name: "Utan", district: "Kab. Sumbawa", lat: -8.4700, lng: 117.1500 },
-  "rhee": { name: "Rhee", district: "Kab. Sumbawa", lat: -8.4500, lng: 117.2500 },
-  "labuhan badas": { name: "Labuhan Badas", district: "Kab. Sumbawa", lat: -8.4800, lng: 117.4000 },
-  "moyo utara": { name: "Moyo Utara", district: "Kab. Sumbawa", lat: -8.4300, lng: 117.4800 },
-  "moyo hilir": { name: "Moyo Hilir", district: "Kab. Sumbawa", lat: -8.5200, lng: 117.5200 },
-  "moyo hulu": { name: "Moyo Hulu", district: "Kab. Sumbawa", lat: -8.6300, lng: 117.4500 },
-  "lape": { name: "Lape", district: "Kab. Sumbawa", lat: -8.6200, lng: 117.6500 },
-  "lenangguar": { name: "Lenangguar", district: "Kab. Sumbawa", lat: -8.7200, lng: 117.3800 },
-  "plampang": { name: "Plampang", district: "Kab. Sumbawa", lat: -8.7800, lng: 117.7800 },
-  "empang": { name: "Empang", district: "Kab. Sumbawa", lat: -8.7500, lng: 118.0200 },
-
-  // Dompu
-  "dompu": { name: "Dompu", district: "Kab. Dompu", lat: -8.5333, lng: 118.4667 },
-  "woja": { name: "Woja", district: "Kab. Dompu", lat: -8.5200, lng: 118.4300 },
-  "kempo": { name: "Kempo", district: "Kab. Dompu", lat: -8.5500, lng: 118.3000 },
-  "manggelewa": { name: "Manggelewa", district: "Kab. Dompu", lat: -8.5600, lng: 118.2300 },
-  "kilo": { name: "Kilo", district: "Kab. Dompu", lat: -8.3200, lng: 118.4200 },
-  "hu'u": { name: "Hu'u", district: "Kab. Dompu", lat: -8.8000, lng: 118.4500 },
-  "pekat": { name: "Pekat", district: "Kab. Dompu", lat: -8.3800, lng: 117.7800 },
-  "pajo": { name: "Pajo", district: "Kab. Dompu", lat: -8.6300, lng: 118.4700 },
-
-  // Bima & Kota Bima
-  "asakota": { name: "Asakota", district: "Kota Bima", lat: -8.4400, lng: 118.7200 },
-  "mpunda": { name: "Mpunda", district: "Kota Bima", lat: -8.4600, lng: 118.7300 },
-  "rasanae barat": { name: "Rasanae Barat", district: "Kota Bima", lat: -8.4600, lng: 118.7100 },
-  "rasanae timur": { name: "Rasanae Timur", district: "Kota Bima", lat: -8.4700, lng: 118.7600 },
-  "raba": { name: "Raba", district: "Kota Bima", lat: -8.4700, lng: 118.7500 },
-  "woha": { name: "Woha", district: "Kab. Bima", lat: -8.5600, lng: 118.7300 },
-  "bolo": { name: "Bolo", district: "Kab. Bima", lat: -8.5100, lng: 118.6300 },
-  "madapangga": { name: "Madapangga", district: "Kab. Bima", lat: -8.5400, lng: 118.5700 },
-  "donggo": { name: "Donggo", district: "Kab. Bima", lat: -8.5000, lng: 118.5000 },
-  "soromandi": { name: "Soromandi", district: "Kab. Bima", lat: -8.3800, lng: 118.6200 },
-  "sanggar": { name: "Sanggar", district: "Kab. Bima", lat: -8.3500, lng: 118.4500 },
-  "tambora": { name: "Tambora", district: "Kab. Bima", lat: -8.2800, lng: 118.0000 },
-  "belo": { name: "Belo", district: "Kab. Bima", lat: -8.5800, lng: 118.7300 },
-  "monta": { name: "Monta", district: "Kab. Bima", lat: -8.6800, lng: 118.7300 },
-};
-
-// Helper to fetch and parse BMKG Nowcasting Alert
-async function getNowcastingAlertData(): Promise<any> {
-  const now = Date.now();
-  if (
-    cache.nowcastingNtb &&
-    now - cache.nowcastingNtb.timestamp < CACHE_TTL_MS
-  ) {
-    return cache.nowcastingNtb.data;
-  }
-
-  let warningData: any = { hasWarning: false };
-  try {
-    const rawXml = await fetchBMKG(
-      "https://www.bmkg.go.id/alerts/nowcast/id",
-      6000,
-    );
-    const parsed = xmlParser.parse(rawXml);
-    const items = parsed?.rss?.channel?.item;
-    if (!items) {
-      cache.nowcastingNtb = { timestamp: now, data: warningData };
-      return warningData;
-    }
-
-    const itemList = Array.isArray(items) ? items : [items];
-
-    // NTB-related keywords to match against title and description
-    const ntbKeywords =
-      /nusa\s*tenggara\s*barat|NTB|lombok|sumbawa|bima|mataram|dompu|selat\s*alas|selat\s*lombok/i;
-
-    const ntbAlerts = itemList.filter((item: any) => {
-      const title = item.title || "";
-      const desc = item.description || "";
-      return ntbKeywords.test(title) || ntbKeywords.test(desc);
-    });
-
-    if (ntbAlerts.length > 0) {
-      const latest = ntbAlerts[0];
-      const description = latest.description || "";
-
-      // Extract affected districts from description
-      const affectedDistricts: any[] = [];
-      const kecamatanMatch = description.match(
-        /khususnya di\s+(.+?)(?:\.\s|$)/i,
-      );
-      const kecamatanList = kecamatanMatch ? kecamatanMatch[1] : "";
-
-      const districtMapping: Record<
-        string,
-        { name: string; locations: string[] }
-      > = {};
-      const kecamatanLower = kecamatanList.toLowerCase();
-
-      // Check all kabupaten kecamatan
-      for (const [key, val] of Object.entries(NTB_KECAMATAN_MAP)) {
-        if (kecamatanLower.includes(key)) {
-          if (!districtMapping[val.district]) {
-            districtMapping[val.district] = { name: val.district, locations: [] };
-          }
-          if (!districtMapping[val.district].locations.includes(val.name)) {
-            districtMapping[val.district].locations.push(val.name);
-          }
-        }
-      }
-
-      for (const key of Object.keys(districtMapping)) {
-        const d = districtMapping[key];
-        affectedDistricts.push({
-          name: d.name,
-          locations: d.locations.join(", "),
-          status: "",
-        });
-      }
-
-      if (affectedDistricts.length === 0) {
-        affectedDistricts.push({
-          name: "Wilayah NTB",
-          locations: kecamatanList || "Lihat detail peringatan BMKG",
-          status: "",
-        });
-      }
-
-      let severity = "Waspada (Kuning)";
-      const titleLower = (latest.title || "").toLowerCase();
-      if (
-        titleLower.includes("sangat lebat") ||
-        titleLower.includes("ekstrem")
-      ) {
-        severity = "Siaga (Orange)";
-      } else if (titleLower.includes("lebat")) {
-        severity = "Waspada (Kuning)";
-      }
-
-      let validUntil = "";
-      const validMatch = description.match(
-        /berlangsung hingga\s+(.+?)(?:\.\s|$)/i,
-      );
-      if (validMatch) {
-        validUntil = validMatch[1].trim();
-      }
-
-      const issueTime = latest.pubDate
-        ? new Date(latest.pubDate).toLocaleTimeString("id-ID", {
-            hour: "2-digit",
-            minute: "2-digit",
-            timeZone: "Asia/Makassar",
-          }) + " WITA"
-        : new Date().toLocaleTimeString("id-ID", {
-            hour: "2-digit",
-            minute: "2-digit",
-          }) + " WITA";
-
-      warningData = {
-        hasWarning: true,
-        title:
-          latest.title || "PERINGATAN DINI CUACA WILAYAH NUSA TENGGARA BARAT",
-        issueTime,
-        description: description.replace(/\n/g, " ").trim(),
-        severity,
-        hazardTypes: [],
-        affectedDistricts,
-        validUntil: validUntil || "Lihat detail peringatan BMKG",
-        source: "BMKG Peringatan Dini Cuaca (Nowcasting)",
-        updatedAt: new Date().toISOString(),
-        alertCount: ntbAlerts.length,
-        capLink: latest.link || "",
-      };
-
-      if (titleLower.includes("hujan"))
-        warningData.hazardTypes.push("Hujan Lebat");
-      if (titleLower.includes("petir"))
-        warningData.hazardTypes.push("Petir / Kilat");
-      if (titleLower.includes("angin"))
-        warningData.hazardTypes.push("Angin Kencang");
-    }
-  } catch (err: any) {
-    console.warn("BMKG Nowcasting RSS fetch failed:", err.message);
-  }
-
-  cache.nowcastingNtb = { timestamp: now, data: warningData };
-  return warningData;
-}
-
 // 5. Nowcasting Peringatan Dini Cuaca NTB (BMKG Nowcasting Alert RSS Feed)
 app.get("/api/bmkg/nowcasting/ntb", async (_req, res) => {
   try {
-    const data = await getNowcastingAlertData();
-    res.json(data);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// 5b. Curah Hujan Open-Meteo berbasis Lokasi Peringatan Dini Nowcasting BMKG
-app.get("/api/bmkg/curah-hujan", async (_req, res) => {
-  try {
     const now = Date.now();
-    if (cache.curahHujan && now - cache.curahHujan.timestamp < CACHE_TTL_MS) {
-      return res.json(cache.curahHujan.data);
+    if (
+      cache.nowcastingNtb &&
+      now - cache.nowcastingNtb.timestamp < CACHE_TTL_MS
+    ) {
+      return res.json(cache.nowcastingNtb.data);
     }
 
-    const nowcast = await getNowcastingAlertData();
-    const hasNowcast = nowcast && nowcast.hasWarning;
-
-    // Jika di wilayah tersebut tidak ada peringatan dini dari nowcasting BMKG, jangan munculkan data curah hujan
-    if (!hasNowcast) {
-      const emptyPayload = {
-        updatedAt: new Date().toISOString(),
-        hasNowcastAlert: false,
-        alertLocationsCount: 0,
-        locations: [],
-      };
-      cache.curahHujan = { timestamp: now, data: emptyPayload };
-      return res.json(emptyPayload);
-    }
-
-    // Collect target locations map: HANYA lokasi yang terkena peringatan dini nowcasting
-    const targetLocationsMap = new Map<
-      string,
-      {
-        id: string;
-        name: string;
-        district: string;
-        lat: number;
-        lng: number;
-        isNowcastAlertArea: boolean;
-        warningTitle?: string;
-        warningSeverity?: string;
-      }
-    >();
-
-    // 1. Ekstrak kecamatan yang disebutkan dalam peringatan nowcasting BMKG
-    if (nowcast.description) {
-      const descLower = nowcast.description.toLowerCase();
-      for (const [key, kec] of Object.entries(NTB_KECAMATAN_MAP)) {
-        if (descLower.includes(key)) {
-          const id = "kec-" + key.replace(/\s+/g, "-");
-          if (!targetLocationsMap.has(id)) {
-            targetLocationsMap.set(id, {
-              id,
-              name: `Kec. ${kec.name}`,
-              district: kec.district,
-              lat: kec.lat,
-              lng: kec.lng,
-              isNowcastAlertArea: true,
-              warningTitle: nowcast.title,
-              warningSeverity: nowcast.severity,
-            });
-          }
-        }
-      }
-    }
-
-    // 2. Jika ada kabupaten yang terkena peringatan dini tetapi kecamatannya belum terpetakan, masukkan ibukota kabupaten tersebut
-    if (Array.isArray(nowcast.affectedDistricts)) {
-      for (const ad of nowcast.affectedDistricts) {
-        const adNameLower = (ad.name || "").toLowerCase();
-        for (const d of NTB_DISTRICTS) {
-          if (
-            adNameLower.includes(d.name.toLowerCase()) ||
-            d.name.toLowerCase().includes(adNameLower)
-          ) {
-            const hasExistingKec = Array.from(targetLocationsMap.values()).some(
-              (loc) => loc.district.toLowerCase().includes(d.name.toLowerCase()),
-            );
-            if (!hasExistingKec && !targetLocationsMap.has(d.id)) {
-              targetLocationsMap.set(d.id, {
-                id: d.id,
-                name: d.name,
-                district: d.name,
-                lat: d.lat,
-                lng: d.lng,
-                isNowcastAlertArea: true,
-                warningTitle: nowcast.title,
-                warningSeverity: nowcast.severity,
-              });
-            }
-          }
-        }
-      }
-    }
-
-    // Filter ketat: HANYA lokasi yang ada peringatan dini nowcasting
-    const locationsList = Array.from(targetLocationsMap.values()).filter(
-      (loc) => loc.isNowcastAlertArea,
-    );
-
-    if (locationsList.length === 0) {
-      const emptyPayload = {
-        updatedAt: new Date().toISOString(),
-        hasNowcastAlert: false,
-        alertLocationsCount: 0,
-        locations: [],
-      };
-      cache.curahHujan = { timestamp: now, data: emptyPayload };
-      return res.json(emptyPayload);
-    }
-
-    // 3. Batch query Open-Meteo for all target coordinates in ONE call
-    const lats = locationsList.map((loc) => loc.lat.toFixed(4)).join(",");
-    const lngs = locationsList.map((loc) => loc.lng.toFixed(4)).join(",");
-    const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,relative_humidity_2m,precipitation,rain,showers,weather_code,wind_speed_10m&daily=precipitation_sum&timezone=Asia%2FMakassar`;
-
-    const openMeteoRes = await fetch(openMeteoUrl, {
-      headers: { "User-Agent": "BMKG-NTB-Monitor/1.0" },
-    });
-
-    if (!openMeteoRes.ok) {
-      throw new Error(`Open-Meteo HTTP ${openMeteoRes.status}`);
-    }
-
-    const openMeteoData = await openMeteoRes.json();
-    const dataList = Array.isArray(openMeteoData) ? openMeteoData : [openMeteoData];
-
-    // 4. Map Open-Meteo weather and precipitation to our structured format
-    const enrichedLocations = locationsList.map((loc, idx) => {
-      const meteo = dataList[idx] || {};
-      const cur = meteo.current || {};
-      const daily = meteo.daily || {};
-
-      const precipitationMm = Number((cur.precipitation ?? 0).toFixed(1));
-      const rainMm = Number((cur.rain ?? 0).toFixed(1));
-      const dailyPrecipitationSumMm = Number(
-        ((daily.precipitation_sum && daily.precipitation_sum[0]) ?? 0).toFixed(1),
+    // Fetch actual BMKG Nowcasting RSS feed
+    let warningData: any = { hasWarning: false };
+    try {
+      const rawXml = await fetchBMKG(
+        "https://www.bmkg.go.id/alerts/nowcast/id",
+        6000,
       );
-      const temp = Math.round(cur.temperature_2m ?? 29);
-      const hum = Math.round(cur.relative_humidity_2m ?? 75);
-      const windKt = Math.round((cur.wind_speed_10m ?? 12) * 0.539957);
-      const weatherCode = cur.weather_code ?? 1;
-      const weatherInfo = mapWmoToBmkg(weatherCode);
-
-      // BMKG Precipitation Intensity Classification
-      let intensity:
-        | "Tidak Ada Hujan"
-        | "Hujan Ringan"
-        | "Hujan Sedang"
-        | "Hujan Lebat"
-        | "Hujan Sangat Lebat" = "Tidak Ada Hujan";
-      let intensityColor = "#38bdf8"; // cyan-400
-
-      if (precipitationMm > 20.0) {
-        intensity = "Hujan Sangat Lebat";
-        intensityColor = "#ef4444"; // red-500
-      } else if (precipitationMm > 10.0) {
-        intensity = "Hujan Lebat";
-        intensityColor = "#f97316"; // orange-500
-      } else if (precipitationMm > 5.0) {
-        intensity = "Hujan Sedang";
-        intensityColor = "#eab308"; // yellow-500
-      } else if (precipitationMm > 0.05) {
-        intensity = "Hujan Ringan";
-        intensityColor = "#0284c7"; // sky-600
+      const parsed = xmlParser.parse(rawXml);
+      const items = parsed?.rss?.channel?.item;
+      if (!items) {
+        cache.nowcastingNtb = { timestamp: now, data: warningData };
+        return res.json(warningData);
       }
 
-      return {
-        id: loc.id,
-        name: loc.name,
-        district: loc.district,
-        lat: loc.lat,
-        lng: loc.lng,
-        isNowcastAlertArea: loc.isNowcastAlertArea,
-        precipitationMm,
-        rainMm,
-        dailyPrecipitationSumMm,
-        intensity,
-        intensityColor,
-        weatherDesc: weatherInfo.desc,
-        weatherCode,
-        temperatureC: temp,
-        humidityPercent: hum,
-        windSpeedKt: windKt,
-        warningTitle: loc.warningTitle,
-        warningSeverity: loc.warningSeverity,
-      };
-    });
+      const itemList = Array.isArray(items) ? items : [items];
 
-    const responsePayload = {
-      updatedAt: new Date().toISOString(),
-      hasNowcastAlert: Boolean(hasNowcast),
-      nowcastTitle: nowcast?.title,
-      nowcastSeverity: nowcast?.severity,
-      nowcastValidUntil: nowcast?.validUntil,
-      alertLocationsCount: enrichedLocations.filter(
-        (l) => l.isNowcastAlertArea,
-      ).length,
-      locations: enrichedLocations,
-    };
+      // NTB-related keywords to match against title and description
+      const ntbKeywords =
+        /nusa\s*tenggara\s*barat|NTB|lombok|sumbawa|bima|mataram|dompu|selat\s*alas|selat\s*lombok/i;
 
-    cache.curahHujan = { timestamp: now, data: responsePayload };
-    res.json(responsePayload);
+      const ntbAlerts = itemList.filter((item: any) => {
+        const title = item.title || "";
+        const desc = item.description || "";
+        return ntbKeywords.test(title) || ntbKeywords.test(desc);
+      });
+
+      if (ntbAlerts.length > 0) {
+        // Parse the most recent NTB alert
+        const latest = ntbAlerts[0];
+        const description = latest.description || "";
+
+        // Extract affected districts from description
+        const affectedDistricts: any[] = [];
+        // BMKG descriptions list kecamatan after "khususnya di"
+        const kecamatanMatch = description.match(
+          /khususnya di\s+(.+?)(?:\.\s|$)/i,
+        );
+        const kecamatanList = kecamatanMatch ? kecamatanMatch[1] : "";
+
+        // Try to map kecamatan to their kabupaten/kota
+        const districtMapping: Record<
+          string,
+          { name: string; locations: string[] }
+        > = {};
+        const kecamatanLower = kecamatanList.toLowerCase();
+
+        // Mataram kecamatan
+        const mataramKec = [
+          "ampenan",
+          "cakranegara",
+          "sandubaya",
+          "selaparang",
+          "sekarbela",
+          "mataram",
+        ];
+        const mataramFound = mataramKec.filter((k) =>
+          kecamatanLower.includes(k),
+        );
+        if (mataramFound.length > 0) {
+          districtMapping["mataram"] = {
+            name: "Kota Mataram",
+            locations: mataramFound,
+          };
+        }
+
+        // Lombok Barat
+        const lobarKec = [
+          "batulayar",
+          "gunungsari",
+          "lingsar",
+          "narmada",
+          "kediri",
+          "labuapi",
+          "gerung",
+          "sekotong",
+          "lembar",
+          "kuripan",
+        ];
+        const lobarFound = lobarKec.filter((k) => kecamatanLower.includes(k));
+        if (lobarFound.length > 0) {
+          districtMapping["lobar"] = {
+            name: "Lombok Barat",
+            locations: lobarFound,
+          };
+        }
+
+        // Lombok Utara
+        const lutaraKec = [
+          "pemenang",
+          "tanjung",
+          "gangga",
+          "kayangan",
+          "bayan",
+        ];
+        const lutaraFound = lutaraKec.filter((k) => kecamatanLower.includes(k));
+        if (lutaraFound.length > 0) {
+          districtMapping["lutara"] = {
+            name: "Lombok Utara",
+            locations: lutaraFound,
+          };
+        }
+
+        // Lombok Tengah
+        const lotengKec = [
+          "praya",
+          "jonggat",
+          "pujut",
+          "batukliang",
+          "kopang",
+          "janapria",
+        ];
+        const lotengFound = lotengKec.filter((k) => kecamatanLower.includes(k));
+        if (lotengFound.length > 0) {
+          districtMapping["loteng"] = {
+            name: "Lombok Tengah",
+            locations: lotengFound,
+          };
+        }
+
+        // Lombok Timur
+        const lotimKec = [
+          "sembalun",
+          "pringgabaya",
+          "sambelia",
+          "labuhan haji",
+          "selong",
+          "aikmel",
+          "masbagik",
+          "sukamulia",
+          "suralaga",
+          "terara",
+          "sakra",
+          "keruak",
+          "jerowaru",
+        ];
+        const lotimFound = lotimKec.filter((k) => kecamatanLower.includes(k));
+        if (lotimFound.length > 0) {
+          districtMapping["lotim"] = {
+            name: "Lombok Timur",
+            locations: lotimFound,
+          };
+        }
+
+        // Sumbawa Barat
+        const ksbKec = [
+          "taliwang",
+          "seteluk",
+          "jereweh",
+          "maluk",
+          "sekongkang",
+          "brang rea",
+          "brang ene",
+          "poto tano",
+        ];
+        const ksbFound = ksbKec.filter((k) => kecamatanLower.includes(k));
+        if (ksbFound.length > 0) {
+          districtMapping["ksb"] = {
+            name: "Sumbawa Barat",
+            locations: ksbFound,
+          };
+        }
+
+        // Sumbawa
+        const sbwKec = [
+          "sumbawa",
+          "labuhan badas",
+          "moyo utara",
+          "moyo hilir",
+          "moyo hulu",
+          "rhee",
+          "utan",
+          "alas",
+          "alas barat",
+          "buer",
+          "lape",
+          "plampang",
+          "empang",
+        ];
+        const sbwFound = sbwKec.filter((k) => kecamatanLower.includes(k));
+        if (sbwFound.length > 0) {
+          districtMapping["sumbawa"] = {
+            name: "Kab. Sumbawa",
+            locations: sbwFound,
+          };
+        }
+
+        // Dompu
+        const dmpKec = [
+          "dompu",
+          "hu'u",
+          "kilo",
+          "kempo",
+          "woja",
+          "manggelewa",
+          "pekat",
+          "pajo",
+        ];
+        const dmpFound = dmpKec.filter((k) => kecamatanLower.includes(k));
+        if (dmpFound.length > 0) {
+          districtMapping["dompu"] = {
+            name: "Kab. Dompu",
+            locations: dmpFound,
+          };
+        }
+
+        // Bima / Kota Bima
+        const bimaKec = [
+          "bolo",
+          "madapangga",
+          "woha",
+          "monta",
+          "belo",
+          "donggo",
+          "soromandi",
+          "sanggar",
+          "tambora",
+          "rasanae barat",
+          "rasanae timur",
+          "raba",
+          "mpunda",
+          "asakota",
+        ];
+        const bimaFound = bimaKec.filter((k) => kecamatanLower.includes(k));
+        if (bimaFound.length > 0) {
+          districtMapping["bima"] = {
+            name: "Kota Bima & Kab. Bima",
+            locations: bimaFound,
+          };
+        }
+
+        for (const key of Object.keys(districtMapping)) {
+          const d = districtMapping[key];
+          affectedDistricts.push({
+            name: d.name,
+            locations: d.locations
+              .map((l) => l.charAt(0).toUpperCase() + l.slice(1))
+              .join(", "),
+            status: "",
+          });
+        }
+
+        // If no specific kecamatan mapped but alert mentions NTB region
+        if (affectedDistricts.length === 0) {
+          affectedDistricts.push({
+            name: "Wilayah NTB",
+            locations: kecamatanList || "Lihat detail peringatan BMKG",
+            status: "",
+          });
+        }
+
+        // Determine severity from title
+        let severity = "Waspada (Kuning)";
+        const titleLower = (latest.title || "").toLowerCase();
+        if (
+          titleLower.includes("sangat lebat") ||
+          titleLower.includes("ekstrem")
+        ) {
+          severity = "Siaga (Orange)";
+        } else if (titleLower.includes("lebat")) {
+          severity = "Waspada (Kuning)";
+        }
+
+        // Extract valid time from description
+        let validUntil = "";
+        const validMatch = description.match(
+          /berlangsung hingga\s+(.+?)(?:\.\s|$)/i,
+        );
+        if (validMatch) {
+          validUntil = validMatch[1].trim();
+        }
+
+        const issueTime = latest.pubDate
+          ? new Date(latest.pubDate).toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone: "Asia/Makassar",
+            }) + " WITA"
+          : new Date().toLocaleTimeString("id-ID", {
+              hour: "2-digit",
+              minute: "2-digit",
+            }) + " WITA";
+
+        warningData = {
+          hasWarning: true,
+          title:
+            latest.title || "PERINGATAN DINI CUACA WILAYAH NUSA TENGGARA BARAT",
+          issueTime,
+          description: description.replace(/\n/g, " ").trim(),
+          severity,
+          hazardTypes: [],
+          affectedDistricts,
+          validUntil: validUntil || "Lihat detail peringatan BMKG",
+          source: "BMKG Peringatan Dini Cuaca (Nowcasting)",
+          updatedAt: new Date().toISOString(),
+          alertCount: ntbAlerts.length,
+          capLink: latest.link || "",
+        };
+
+        // Extract hazard types from title
+        if (titleLower.includes("hujan"))
+          warningData.hazardTypes.push("Hujan Lebat");
+        if (titleLower.includes("petir"))
+          warningData.hazardTypes.push("Petir / Kilat");
+        if (titleLower.includes("angin"))
+          warningData.hazardTypes.push("Angin Kencang");
+      }
+    } catch (err: any) {
+      console.warn("BMKG Nowcasting RSS fetch failed:", err.message);
+      // No warning data available — that's fine, return hasWarning: false
+    }
+
+    cache.nowcastingNtb = { timestamp: now, data: warningData };
+    res.json(warningData);
   } catch (error: any) {
-    console.warn("Curah hujan endpoint failed:", error.message);
     res.status(500).json({ error: error.message });
   }
 });

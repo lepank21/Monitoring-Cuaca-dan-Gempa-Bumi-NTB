@@ -86,34 +86,3 @@ export interface VolcanoInfo {
   hazardRadiusKm: number;
   dangerDetails: string;
 }
-
-export interface RainfallLocation {
-  id: string;
-  name: string;
-  district: string;
-  lat: number;
-  lng: number;
-  isNowcastAlertArea: boolean;
-  precipitationMm: number; // curah hujan saat ini (mm/jam)
-  rainMm: number;
-  dailyPrecipitationSumMm: number; // akumulasi curah hujan hari ini (mm)
-  intensity: 'Tidak Ada Hujan' | 'Hujan Ringan' | 'Hujan Sedang' | 'Hujan Lebat' | 'Hujan Sangat Lebat';
-  intensityColor: string;
-  weatherDesc: string;
-  weatherCode: number;
-  temperatureC: number;
-  humidityPercent: number;
-  windSpeedKt?: number;
-  warningTitle?: string;
-  warningSeverity?: string;
-}
-
-export interface RainfallNowcastResponse {
-  updatedAt: string;
-  hasNowcastAlert: boolean;
-  nowcastTitle?: string;
-  nowcastSeverity?: string;
-  nowcastValidUntil?: string;
-  alertLocationsCount: number;
-  locations: RainfallLocation[];
-}
