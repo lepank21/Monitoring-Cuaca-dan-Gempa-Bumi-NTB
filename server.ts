@@ -1107,7 +1107,19 @@ app.get("/api/bmkg/curah-hujan", async (_req, res) => {
     const nowcast = await getNowcastingAlertData();
     const hasNowcast = nowcast && nowcast.hasWarning;
 
-    // Collect target locations map: id -> location info
+    // Jika di wilayah tersebut tidak ada peringatan dini dari nowcasting BMKG, jangan munculkan data curah hujan
+    if (!hasNowcast) {
+      const emptyPayload = {
+        updatedAt: new Date().toISOString(),
+        hasNowcastAlert: false,
+        alertLocationsCount: 0,
+        locations: [],
+      };
+      cache.curahHujan = { timestamp: now, data: emptyPayload };
+      return res.json(emptyPayload);
+    }
+
+    // Collect target locations map: HANYA lokasi yang terkena peringatan dini nowcasting
     const targetLocationsMap = new Map<
       string,
       {
@@ -1122,8 +1134,8 @@ app.get("/api/bmkg/curah-hujan", async (_req, res) => {
       }
     >();
 
-    // 1. If nowcasting alert exists, extract affected kecamatan locations
-    if (hasNowcast && nowcast.description) {
+    // 1. Ekstrak kecamatan yang disebutkan dalam peringatan nowcasting BMKG
+    if (nowcast.description) {
       const descLower = nowcast.description.toLowerCase();
       for (const [key, kec] of Object.entries(NTB_KECAMATAN_MAP)) {
         if (descLower.includes(key)) {
@@ -1144,38 +1156,49 @@ app.get("/api/bmkg/curah-hujan", async (_req, res) => {
       }
     }
 
-    // 2. Also ensure all 11 main NTB district centers (and Mandalika) are included for broad provincial coverage
-    for (const d of NTB_DISTRICTS) {
-      if (!targetLocationsMap.has(d.id)) {
-        const isDistrictInAlert = Boolean(
-          hasNowcast &&
-            (nowcast.affectedDistricts || []).some(
-              (ad: any) =>
-                ad.name.toLowerCase().includes(d.name.toLowerCase()) ||
-                d.name.toLowerCase().includes(ad.name.toLowerCase()),
-            ),
-        );
-        targetLocationsMap.set(d.id, {
-          id: d.id,
-          name: d.name,
-          district: d.name,
-          lat: d.lat,
-          lng: d.lng,
-          isNowcastAlertArea: isDistrictInAlert,
-          warningTitle: isDistrictInAlert ? nowcast.title : undefined,
-          warningSeverity: isDistrictInAlert ? nowcast.severity : undefined,
-        });
+    // 2. Jika ada kabupaten yang terkena peringatan dini tetapi kecamatannya belum terpetakan, masukkan ibukota kabupaten tersebut
+    if (Array.isArray(nowcast.affectedDistricts)) {
+      for (const ad of nowcast.affectedDistricts) {
+        const adNameLower = (ad.name || "").toLowerCase();
+        for (const d of NTB_DISTRICTS) {
+          if (
+            adNameLower.includes(d.name.toLowerCase()) ||
+            d.name.toLowerCase().includes(adNameLower)
+          ) {
+            const hasExistingKec = Array.from(targetLocationsMap.values()).some(
+              (loc) => loc.district.toLowerCase().includes(d.name.toLowerCase()),
+            );
+            if (!hasExistingKec && !targetLocationsMap.has(d.id)) {
+              targetLocationsMap.set(d.id, {
+                id: d.id,
+                name: d.name,
+                district: d.name,
+                lat: d.lat,
+                lng: d.lng,
+                isNowcastAlertArea: true,
+                warningTitle: nowcast.title,
+                warningSeverity: nowcast.severity,
+              });
+            }
+          }
+        }
       }
     }
 
-    const locationsList = Array.from(targetLocationsMap.values());
+    // Filter ketat: HANYA lokasi yang ada peringatan dini nowcasting
+    const locationsList = Array.from(targetLocationsMap.values()).filter(
+      (loc) => loc.isNowcastAlertArea,
+    );
+
     if (locationsList.length === 0) {
-      return res.json({
+      const emptyPayload = {
         updatedAt: new Date().toISOString(),
         hasNowcastAlert: false,
         alertLocationsCount: 0,
         locations: [],
-      });
+      };
+      cache.curahHujan = { timestamp: now, data: emptyPayload };
+      return res.json(emptyPayload);
     }
 
     // 3. Batch query Open-Meteo for all target coordinates in ONE call

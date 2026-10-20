@@ -562,7 +562,11 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
     if (!showRainfall || !rainfallLocations || rainfallLocations.length === 0) return;
 
-    rainfallLocations.forEach((loc) => {
+    // Hanya tampilkan data curah hujan jika ada peringatan dini nowcasting BMKG
+    const alertLocations = rainfallLocations.filter((loc) => loc.isNowcastAlertArea);
+    if (alertLocations.length === 0) return;
+
+    alertLocations.forEach((loc) => {
       const hasRain = loc.precipitationMm > 0;
       const isAlert = loc.isNowcastAlertArea;
 
