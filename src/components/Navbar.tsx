@@ -8,12 +8,13 @@ import {
   PhoneCall,
   RefreshCw,
   AlertTriangle,
+  CloudRain,
 } from "lucide-react";
 
 interface NavbarProps {
-  activeView: "map" | "weather" | "quakes" | "laravel" | "contacts";
+  activeView: "map" | "weather" | "quakes" | "rainfall" | "laravel" | "contacts";
   setActiveView: (
-    view: "map" | "weather" | "quakes" | "laravel" | "contacts",
+    view: "map" | "weather" | "quakes" | "rainfall" | "laravel" | "contacts",
   ) => void;
   isSoundEnabled: boolean;
   onToggleSound: () => void;
@@ -84,6 +85,18 @@ export const Navbar: React.FC<NavbarProps> = ({
             }`}
           >
             Daftar Gempa BMKG
+          </button>
+
+          <button
+            onClick={() => setActiveView("rainfall")}
+            className={`transition-colors hover:text-white whitespace-nowrap pb-0.5 flex items-center gap-1.5 ${
+              activeView === "rainfall"
+                ? "text-sky-400 border-b-2 border-sky-400 font-semibold"
+                : ""
+            }`}
+          >
+            <CloudRain className="w-3.5 h-3.5" />
+            <span>Curah Hujan</span>
           </button>
 
           <button
@@ -186,6 +199,12 @@ export const Navbar: React.FC<NavbarProps> = ({
           className={`py-1 px-2 rounded ${activeView === "quakes" ? "bg-sky-600/30 text-sky-400" : "text-slate-400"}`}
         >
           Gempa
+        </button>
+        <button
+          onClick={() => setActiveView("rainfall")}
+          className={`py-1 px-2 rounded ${activeView === "rainfall" ? "bg-sky-600/30 text-sky-400" : "text-slate-400"}`}
+        >
+          Hujan
         </button>
         <button
           onClick={() => setActiveView("contacts")}

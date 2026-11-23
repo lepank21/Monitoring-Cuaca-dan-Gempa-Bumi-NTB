@@ -73,6 +73,28 @@
   animation-play-state: paused;
 }
 
+/* Rain animation overlay for rainfall map */
+@keyframes rain-fall {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: -20px 40px;
+  }
+}
+
+.rain-animation-circle {
+  animation: rain-fall 0.6s linear infinite;
+  background-image: repeating-linear-gradient(
+    -60deg,
+    transparent,
+    transparent 4px,
+    rgba(180, 210, 255, 0.15) 4px,
+    rgba(180, 210, 255, 0.15) 5px
+  );
+  background-size: 20px 40px;
+}
+
 /* Custom Scrollbar for Alert Panels */
 ::-webkit-scrollbar {
   width: 6px;

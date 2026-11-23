@@ -1271,6 +1271,101 @@ app.get("/api/siaga/kejadian-bencana", async (_req, res) => {
   }
 });
 
+// 12. Curah Hujan & Badai NTB (Rainfall Grid from Open-Meteo)
+app.get("/api/openmeteo/rainfall-ntb", async (_req, res) => {
+  try {
+    // Create a grid of points across NTB for rainfall heatmap
+    // NTB spans roughly lat -7.9 to -9.1, lng 115.8 to 119.3
+    const gridPoints: Array<{ lat: number; lng: number; name?: string }> = [];
+
+    // Key cities with names
+    const cities = [
+      { lat: -8.5833, lng: 116.1167, name: "Mataram" },
+      { lat: -8.65, lng: 116.5333, name: "Selong" },
+      { lat: -8.5, lng: 117.4333, name: "Sumbawa Besar" },
+      { lat: -8.5333, lng: 118.4667, name: "Empang" },
+      { lat: -8.4583, lng: 118.7278, name: "Kelurahan Pane" },
+      { lat: -8.35, lng: 116.1667, name: "Tanjung" },
+      { lat: -8.7, lng: 116.2833, name: "Praya" },
+      { lat: -8.75, lng: 116.85, name: "Taliwang" },
+      { lat: -8.46, lng: 118.73, name: "Kota Bima" },
+      { lat: -8.8950, lng: 116.2900, name: "Mandalika" },
+    ];
+
+    // Additional grid points for heatmap interpolation (no names)
+    for (let lat = -8.0; lat >= -9.0; lat -= 0.25) {
+      for (let lng = 115.9; lng <= 119.2; lng += 0.25) {
+        gridPoints.push({ lat, lng });
+      }
+    }
+
+    // Add city points (they have names)
+    gridPoints.push(...cities);
+
+    // Batch fetch from Open-Meteo (max ~50 points per call via multi-location)
+    const lats = gridPoints.map((p) => p.lat).join(",");
+    const lngs = gridPoints.map((p) => p.lng).join(",");
+
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=precipitation,rain,weather_code,wind_speed_10m,wind_gusts_10m,cloud_cover&hourly=precipitation,weather_code&forecast_hours=6&timezone=Asia%2FMakassar`;
+
+    const resp = await fetch(url, {
+      headers: { "User-Agent": "BMKG-NTB-Monitor/1.0" },
+    });
+    if (!resp.ok) throw new Error(`Open-Meteo HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    // Open-Meteo returns an array when multiple locations are requested
+    const results = Array.isArray(data) ? data : [data];
+
+    const rainfallGrid = results.map((r: any, i: number) => {
+      const pt = gridPoints[i] || { lat: r.latitude, lng: r.longitude };
+      const precip = r.current?.precipitation ?? 0;
+      const rain = r.current?.rain ?? 0;
+      const weatherCode = r.current?.weather_code ?? 0;
+      const windSpeed = r.current?.wind_speed_10m ?? 0;
+      const windGusts = r.current?.wind_gusts_10m ?? 0;
+      const cloudCover = r.current?.cloud_cover ?? 0;
+
+      // Determine storm level
+      let stormLevel: "none" | "ringan" | "sedang" | "lebat" | "badai" = "none";
+      if (weatherCode >= 95 || windGusts > 70) stormLevel = "badai";
+      else if (weatherCode >= 80 || precip >= 20) stormLevel = "lebat";
+      else if (weatherCode >= 61 || precip >= 5) stormLevel = "sedang";
+      else if (weatherCode >= 51 || precip >= 1) stormLevel = "ringan";
+
+      // 6-hour forecast precipitation totals
+      const hourlyPrecip = r.hourly?.precipitation || [];
+      const totalForecast6h = hourlyPrecip.reduce(
+        (sum: number, v: number) => sum + (v || 0),
+        0,
+      );
+
+      return {
+        lat: pt.lat,
+        lng: pt.lng,
+        name: pt.name || null,
+        precipitation: Math.round(precip * 10) / 10,
+        rain: Math.round(rain * 10) / 10,
+        weatherCode,
+        windSpeed: Math.round(windSpeed),
+        windGusts: Math.round(windGusts),
+        cloudCover,
+        stormLevel,
+        forecast6h: Math.round(totalForecast6h * 10) / 10,
+      };
+    });
+
+    res.json({
+      updatedAt: new Date().toISOString(),
+      source: "Open-Meteo (open-meteo.com)",
+      grid: rainfallGrid,
+    });
+  } catch (error: any) {
+    console.warn("Rainfall grid fetch failed:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Vite Middleware Integration for Development / Production
 async function setupVite() {
   if (process.env.NODE_ENV === "production") {
