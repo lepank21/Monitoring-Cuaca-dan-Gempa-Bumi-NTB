@@ -12,7 +12,6 @@ import { NowcastingBanner } from "./components/NowcastingBanner";
 import { LaravelExportModal } from "./components/LaravelExportModal";
 import { EmergencyContactsModal } from "./components/EmergencyContactsModal";
 import { MarqueeTicker } from "./components/MarqueeTicker";
-import { RainfallStormMap } from "./components/RainfallStormMap";
 import {
   NotificationToast,
   AlertToastData,
@@ -36,7 +35,7 @@ import {
 
 export default function App() {
   const [activeView, setActiveView] = useState<
-    "map" | "weather" | "quakes" | "rainfall" | "laravel" | "contacts"
+    "map" | "weather" | "quakes" | "laravel" | "contacts"
   >("map");
   const [autoGempa, setAutoGempa] = useState<EarthquakeItem | null>(null);
   const [recentQuakes, setRecentQuakes] = useState<EarthquakeItem[]>([]);
@@ -380,12 +379,6 @@ export default function App() {
                 onSelectQuake={(q) => setSelectedQuake(q)}
               />
             </div>
-          </div>
-        )}
-
-        {activeView === "rainfall" && (
-          <div className="flex-1 relative min-h-[550px] h-full rounded-xl overflow-hidden shadow-xl border border-slate-700">
-            <RainfallStormMap />
           </div>
         )}
 
