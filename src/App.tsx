@@ -137,9 +137,21 @@ export default function App() {
         if (weatherRes) setWeatherRegencies(regencyList);
         if (nowcastRes) setNowcasting(nowcastRes);
 
-        if (marineRes && marineRes.NTB && marineRes.NTB.data) {
-          setMarineWarning(marineRes.NTB.data);
-        } else if (marineRes) {
+        let currentMarine = marineRes;
+        if (!currentMarine?.NTB?.data) {
+          try {
+            const direct = await fetch("https://maritim.bmkg.go.id/marine2026-data/warning/warnings.json");
+            if (direct.ok) {
+              currentMarine = await direct.json();
+            }
+          } catch (e) {
+            // direct fetch error ignored
+          }
+        }
+
+        if (currentMarine && currentMarine.NTB && currentMarine.NTB.data) {
+          setMarineWarning(currentMarine.NTB.data);
+        } else if (currentMarine) {
           setMarineWarning(null);
         }
 

@@ -111,8 +111,13 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
     const fetchPorts = async () => {
       try {
         const res = await fetch("/api/bmkg/maritime/ports");
-        const data = await res.json();
-        setNtbPorts(data);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setNtbPorts(data);
+            return;
+          }
+        }
       } catch (err) {
         console.error("Failed to fetch NTB ports:", err);
       }
@@ -377,9 +382,28 @@ export const DisasterMap: React.FC<DisasterMapProps> = ({
 
       marker.on("popupopen", async () => {
         try {
-          const res = await fetch(`/api/bmkg/maritime/port/${port.id}`);
-          if (!res.ok) throw new Error("API failed");
-          const data = await res.json();
+          let data: any = null;
+          try {
+            const res = await fetch(`/api/bmkg/maritime/port/${port.id}`);
+            if (res.ok) {
+              data = await res.json();
+            }
+          } catch {
+            // ignore
+          }
+
+          if (!data || (!data.forecast_day1 && !data.data)) {
+            try {
+              const directRes = await fetch(
+                `https://maritim.bmkg.go.id/marine2026-data/pelabuhan/${port.id}.json`,
+              );
+              if (directRes.ok) {
+                data = await directRes.json();
+              }
+            } catch {
+              // ignore
+            }
+          }
 
           let forecastHtml =
             '<div class="text-xs text-red-400">Data cuaca tidak tersedia</div>';
